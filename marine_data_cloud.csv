@@ -1,0 +1,7 @@
+Date,Contributor_Name,Location,Temperature,pH,Salinity,Predicted_Productivity
+2026-01-19,aromal,Chennai,24.0,7.0,324.0,Low Productivity
+2026-01-19,Rahul,Ankamaly,32.0,7.0,35.0,Good Quality (High Productivity)
+2026-01-19,Manu,kottakkal,32.0,7.0,35.0,Good Quality (High Productivity)
+2026-01-19,Sidhu,Bekkal,28.0,7.5,35.0,High Productivity (Good for Fishing)
+2026-01-19,Geethu,Alappuzha,32.0,7.5,35.0,High Productivity (Good for Fishing)
+2026-01-20,Aromal ,Chennai,28.0,7.5,35.0,High Productivity (Good for Fishing)
