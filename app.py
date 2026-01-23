@@ -18,6 +18,24 @@ CERTIFICATE_THRESHOLD = 5
 SENDER_EMAIL = "aromalvasanth1038@gmail.com" 
 SENDER_PASSWORD = "roou arbj jlmj jlye" 
 
+# --- CENTRALIZED LOCATION DATA (MOVED TO GLOBAL) ---
+COASTAL_DATA = {
+    "Kerala": ["Thiruvananthapuram Coast", "Kollam Coast", "Alappuzha Coast", "Kochi (Ernakulam) Coast", "Thrissur Coast", "Malappuram Coast", "Kozhikode Coast", "Kannur Coast", "Kasargod Coast", "Other"],
+    "Tamil Nadu": ["Chennai Coast", "Thiruvallur Coast", "Kancheepuram Coast", "Villupuram Coast", "Cuddalore Coast", "Nagapattinam Coast", "Thiruvarur Coast", "Thanjavur Coast", "Pudukottai Coast", "Ramanathapuram Coast", "Thoothukudi Coast", "Tirunelveli Coast", "Kanyakumari Coast", "Other"],
+    "Karnataka": ["Dakshina Kannada Coast", "Udupi Coast", "Uttara Kannada Coast", "Other"],
+    "Maharashtra": ["Mumbai City Coast", "Mumbai Suburban Coast", "Thane Coast", "Palghar Coast", "Raigad Coast", "Ratnagiri Coast", "Sindhudurg Coast", "Other"],
+    "Goa": ["North Goa Coast", "South Goa Coast", "Other"],
+    "Gujarat": ["Kutch Coast", "Jamnagar Coast", "Porbandar Coast", "Junagadh Coast", "Amreli Coast", "Bhavnagar Coast", "Ahmedabad Coast", "Anand Coast", "Bharuch Coast", "Surat Coast", "Navsari Coast", "Valsad Coast", "Other"],
+    "Andhra Pradesh": ["Srikakulam Coast", "Vizianagaram Coast", "Visakhapatnam Coast", "East Godavari Coast", "West Godavari Coast", "Krishna Coast", "Guntur Coast", "Prakasam Coast", "Nellore Coast", "Other"],
+    "Odisha": ["Balasore Coast", "Bhadrak Coast", "Kendrapara Coast", "Jagatsinghpur Coast", "Puri Coast", "Ganjam Coast", "Other"],
+    "West Bengal": ["Purba Medinipur Coast", "South 24 Parganas Coast", "North 24 Parganas Coast", "Other"],
+    "Puducherry (UT)": ["Puducherry Region Coast", "Karaikal Coast", "Mahe Coast", "Yanam Coast", "Other"],
+    "Daman & Diu (UT)": ["Daman Coast", "Diu Coast", "Other"],
+    "Lakshadweep (UT)": ["Kavaratti", "Agatti", "Minicoy", "Amini", "Andrott", "Other"],
+    "Andaman & Nicobar (UT)": ["Port Blair", "Havelock Island", "Neil Island", "Little Andaman", "Great Nicobar", "Other"],
+    "Other State/Region": ["Other"]
+}
+
 # --- UNIT MAPPING FOR CSV EXPORT ---
 COLUMN_CONFIG = {
     # Meta Data
@@ -263,24 +281,6 @@ def main_app():
         pdf_bytes = None
         contributor_name = ""
 
-        # --- CENTRALIZED LOCATION DATA ---
-        coastal_data = {
-            "Kerala": ["Thiruvananthapuram Coast", "Kollam Coast", "Alappuzha Coast", "Kochi (Ernakulam) Coast", "Thrissur Coast", "Malappuram Coast", "Kozhikode Coast", "Kannur Coast", "Kasargod Coast", "Other"],
-            "Tamil Nadu": ["Chennai Coast", "Thiruvallur Coast", "Kancheepuram Coast", "Villupuram Coast", "Cuddalore Coast", "Nagapattinam Coast", "Thiruvarur Coast", "Thanjavur Coast", "Pudukottai Coast", "Ramanathapuram Coast", "Thoothukudi Coast", "Tirunelveli Coast", "Kanyakumari Coast", "Other"],
-            "Karnataka": ["Dakshina Kannada Coast", "Udupi Coast", "Uttara Kannada Coast", "Other"],
-            "Maharashtra": ["Mumbai City Coast", "Mumbai Suburban Coast", "Thane Coast", "Palghar Coast", "Raigad Coast", "Ratnagiri Coast", "Sindhudurg Coast", "Other"],
-            "Goa": ["North Goa Coast", "South Goa Coast", "Other"],
-            "Gujarat": ["Kutch Coast", "Jamnagar Coast", "Porbandar Coast", "Junagadh Coast", "Amreli Coast", "Bhavnagar Coast", "Ahmedabad Coast", "Anand Coast", "Bharuch Coast", "Surat Coast", "Navsari Coast", "Valsad Coast", "Other"],
-            "Andhra Pradesh": ["Srikakulam Coast", "Vizianagaram Coast", "Visakhapatnam Coast", "East Godavari Coast", "West Godavari Coast", "Krishna Coast", "Guntur Coast", "Prakasam Coast", "Nellore Coast", "Other"],
-            "Odisha": ["Balasore Coast", "Bhadrak Coast", "Kendrapara Coast", "Jagatsinghpur Coast", "Puri Coast", "Ganjam Coast", "Other"],
-            "West Bengal": ["Purba Medinipur Coast", "South 24 Parganas Coast", "North 24 Parganas Coast", "Other"],
-            "Puducherry (UT)": ["Puducherry Region Coast", "Karaikal Coast", "Mahe Coast", "Yanam Coast", "Other"],
-            "Daman & Diu (UT)": ["Daman Coast", "Diu Coast", "Other"],
-            "Lakshadweep (UT)": ["Kavaratti", "Agatti", "Minicoy", "Amini", "Andrott", "Other"],
-            "Andaman & Nicobar (UT)": ["Port Blair", "Havelock Island", "Neil Island", "Little Andaman", "Great Nicobar", "Other"],
-            "Other State/Region": ["Other"]
-        }
-
         # --- MODE SELECTION TABS ---
         tab_single, tab_bulk = st.tabs(["📝 Single Entry (Manual)", "📂 Bulk Upload (CSV/Excel)"])
 
@@ -292,8 +292,9 @@ def main_app():
             st.write(f"**Contributor:** {st.session_state['user_name']}")
             
             lc1, lc2, lc3 = st.columns(3)
-            selected_state = lc1.selectbox("Select State / UT", list(coastal_data.keys()), key="s_state")
-            available_coasts = coastal_data[selected_state]
+            # Use Global COASTAL_DATA
+            selected_state = lc1.selectbox("Select State / UT", list(COASTAL_DATA.keys()), key="s_state")
+            available_coasts = COASTAL_DATA[selected_state]
             selected_coast = lc2.selectbox("Select Coastal Region", available_coasts, key="s_coast")
             
             if selected_coast == "Other" or selected_state == "Other State/Region":
@@ -419,8 +420,9 @@ def main_app():
             
             # 1. Location Selection
             bc1, bc2 = st.columns(2)
-            b_state = bc1.selectbox("Select State / UT", list(coastal_data.keys()), key="b_state")
-            b_coast = bc2.selectbox("Select Coastal Region", coastal_data[b_state], key="b_coast")
+            # Use Global COASTAL_DATA
+            b_state = bc1.selectbox("Select State / UT", list(COASTAL_DATA.keys()), key="b_state")
+            b_coast = bc2.selectbox("Select Coastal Region", COASTAL_DATA[b_state], key="b_coast")
             
             if b_coast == "Other" or b_state == "Other State/Region":
                 b_custom = st.text_input("✍️ Type Region Name", key="b_custom")
@@ -656,7 +658,7 @@ def main_app():
             st.warning("Database is empty or missing location data.")
 
     # -----------------------------------------------------
-    # OPTION D: DOWNLOAD CENTER
+    # OPTION D: DOWNLOAD CENTER (UPDATED)
     # -----------------------------------------------------
     elif menu == "📊 Request & Download Data":
         st.header("📂 Advanced Data Download Center")
@@ -668,30 +670,57 @@ def main_app():
             if not raw_df.empty and 'Main_Location' in raw_df.columns:
                 st.divider()
                 st.subheader("🛠️ Step 1: Select Region")
-                available_locs = raw_df['Main_Location'].unique().tolist()
-                selected_loc = st.selectbox("Select Coastal Region", available_locs)
-                filtered_df = raw_df[raw_df['Main_Location'] == selected_loc].copy()
-                st.info(f"Found {len(filtered_df)} records for {selected_loc}.")
                 
-                st.divider()
-                st.subheader("🛠️ Step 2: Select Parameter Categories")
-                cat_options = {
-                    "Physical Parameters": ["Water_Temp", "Salinity", "pH", "Turbidity", "Transparency", "TSS", "TDS", "Color", "Odour"],
-                    "Chemical Parameters": ["DO", "BOD", "COD", "NH4_N", "NO3_N", "NO2_N", "PO4", "SO4"],
-                    "Biological Parameters": ["Chlorophyll", "BGA", "Fecal_Coliform", "Total_Coliform", "Productivity", "Phytoplankton", "Zooplankton"],
-                    "Meteorological & Geo": ["Wind_Speed", "Wind_Direction", "Air_Temp", "Humidity", "Precipitation", "Shoreline_Status", "Population"]
-                }
-                selected_cats = st.multiselect("Choose Data Categories to Download", list(cat_options.keys()))
-                final_cols = ["created_at", "Date", "Time", "Main_Location", "Location", "Latitude", "Longitude"]
-                for cat in selected_cats:
-                    final_cols.extend(cat_options[cat])
-                final_cols = [c for c in final_cols if c in filtered_df.columns]
+                # --- UPDATED: STATE -> REGION FILTER ---
+                available_locs = raw_df['Main_Location'].dropna().unique().tolist()
                 
-                if st.button("Generate CSV"):
-                    export_df = filtered_df[final_cols].copy()
-                    export_df.rename(columns=COLUMN_CONFIG, inplace=True)
-                    csv = export_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(label=f"📥 Download {selected_loc} Data (CSV)", data=csv, file_name=f"NCCR_{selected_loc}_Data.csv", mime="text/csv")
+                d1, d2 = st.columns(2)
+                
+                # 1. State Selector
+                dl_state = d1.selectbox("Select State / UT", list(COASTAL_DATA.keys()))
+                
+                # 2. Filter Regions based on State
+                # Helper: Get valid coastal names for this state from COASTAL_DATA
+                valid_state_regions = COASTAL_DATA.get(dl_state, [])
+                
+                # Logic: Show location if it matches a valid region name OR if it starts with "State - " (custom)
+                filtered_regions = [
+                    loc for loc in available_locs 
+                    if loc in valid_state_regions or loc.startswith(f"{dl_state} -")
+                ]
+                
+                if not filtered_regions:
+                    d2.warning(f"No data found for {dl_state}")
+                    selected_loc = None
+                else:
+                    selected_loc = d2.selectbox("Select Specific Region", filtered_regions)
+
+                if selected_loc:
+                    filtered_df = raw_df[raw_df['Main_Location'] == selected_loc].copy()
+                    st.info(f"Found {len(filtered_df)} records for {selected_loc}.")
+                    
+                    st.divider()
+                    st.subheader("🛠️ Step 2: Select Parameter Categories")
+                    cat_options = {
+                        "Physical Parameters": ["Water_Temp", "Salinity", "pH", "Turbidity", "Transparency", "TSS", "TDS", "Color", "Odour"],
+                        "Chemical Parameters": ["DO", "BOD", "COD", "NH4_N", "NO3_N", "NO2_N", "PO4", "SO4"],
+                        "Biological Parameters": ["Chlorophyll", "BGA", "Fecal_Coliform", "Total_Coliform", "Productivity", "Phytoplankton", "Zooplankton"],
+                        "Meteorological & Geo": ["Wind_Speed", "Wind_Direction", "Air_Temp", "Humidity", "Precipitation", "Shoreline_Status", "Population"]
+                    }
+                    selected_cats = st.multiselect("Choose Data Categories to Download", list(cat_options.keys()))
+                    
+                    final_cols = ["created_at", "Date", "Time", "Main_Location", "Location", "Latitude", "Longitude"]
+                    for cat in selected_cats:
+                        final_cols.extend(cat_options[cat])
+                    
+                    # Ensure columns exist in dataframe
+                    final_cols = [c for c in final_cols if c in filtered_df.columns]
+                    
+                    if st.button("Generate CSV"):
+                        export_df = filtered_df[final_cols].copy()
+                        export_df.rename(columns=COLUMN_CONFIG, inplace=True)
+                        csv = export_df.to_csv(index=False).encode('utf-8')
+                        st.download_button(label=f"📥 Download {selected_loc} Data (CSV)", data=csv, file_name=f"NCCR_{selected_loc}_Data.csv", mime="text/csv")
             else:
                 st.warning("Database is empty or missing 'Main_Location' data.")
         elif status == "Pending":
