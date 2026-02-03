@@ -5,6 +5,7 @@ from datetime import date, datetime
 import database as db
 import utils
 import config
+import prediction # <--- IMPORT THE NEW FILE
 
 def main_app():
     # --- SIDEBAR ---
@@ -22,17 +23,51 @@ def main_app():
     st.title("🌊 NCCR Marine Data Portal")
 
     # --- DEFINE MENUS BASED ON ROLE ---
+    # Added "🔮 AI Prediction Tools" to both menus
     if st.session_state['user_role'] == 'Admin':
-        options = ["📥 Contribute Data", "📰 Research & News", "👮 Data Requests (Approval)", "📂 Master Data Repository", "🗑️ Manage & Delete Data"]
+        options = ["📥 Contribute Data", "🔮 AI Prediction Tools", "🗺️ Global Data Map", "📰 Research & News", "👮 Data Requests (Approval)", "📂 Master Data Repository", "🗑️ Manage & Delete Data"]
     else:
-        options = ["📥 Contribute Data", "📰 Research & News", "📊 Request & Download Data"]
+        options = ["📥 Contribute Data", "🔮 AI Prediction Tools", "🗺️ Global Data Map", "📰 Research & News", "📊 Request & Download Data"]
         
     menu = st.sidebar.radio("Go to:", options)
 
     # -----------------------------------------------------
+    # OPTION: AI PREDICTION TOOLS (NEW)
+    # -----------------------------------------------------
+    if menu == "🔮 AI Prediction Tools":
+        prediction.run_prediction_page() # <--- CALL THE FUNCTION
+
+    # -----------------------------------------------------
+    # OPTION: GLOBAL MAP VIEW (NEW)
+    # -----------------------------------------------------
+    elif menu == "🗺️ Global Data Map":
+        st.header("🌍 Global Marine Data Map")
+        st.info("Visualizing all contributed data points.")
+        
+        df = db.fetch_all_data()
+        
+        if not df.empty:
+            if 'Latitude' in df.columns and 'Longitude' in df.columns:
+                # Filter valid coordinates
+                map_df = df.dropna(subset=['Latitude', 'Longitude'])
+                
+                if not map_df.empty:
+                    # Basic Map
+                    st.map(map_df, latitude='Latitude', longitude='Longitude')
+                    
+                    # Optional: Stats
+                    st.success(f"Displaying **{len(map_df)}** locations.")
+                else:
+                    st.warning("No data points with valid coordinates found.")
+            else:
+                st.warning("Dataset missing Latitude/Longitude columns.")
+        else:
+            st.info("Database is empty.")
+
+    # -----------------------------------------------------
     # OPTION A: CONTRIBUTE DATA
     # -----------------------------------------------------
-    if menu == "📥 Contribute Data":
+    elif menu == "📥 Contribute Data":
         st.header("Submit Marine Field Data")
         st.info("Choose 'Single Entry' for manual input or 'Bulk Upload' for large datasets (Prediction Training).")
 
@@ -217,7 +252,7 @@ def main_app():
                         bulk_df = pd.read_excel(uploaded_file)
 
                     st.write("📊 **Data Preview:**")
-                    st.dataframe(bulk_df.head(), width="stretch")
+                    st.dataframe(bulk_df.head(), use_container_width=True) # FIXED WIDTH ERROR HERE
                     
                     if st.button("🚀 Upload Bulk Data"):
                         data_list = []
@@ -413,8 +448,6 @@ def main_app():
                 valid_regions_config = config.COASTAL_DATA.get(selected_state, [])
                 
                 # 3. Get actual regions existing in Database
-                # This logic checks if the DB location exactly matches a standard region 
-                # OR if it starts with "State - " (custom location format)
                 db_locations = df['Main_Location'].dropna().unique().tolist()
                 
                 filtered_options = [
@@ -429,13 +462,13 @@ def main_app():
                     # 5. Show Data
                     filtered_df = df[df['Main_Location'] == selected_region]
                     st.info(f"📂 Found **{len(filtered_df)}** records under **{selected_region}**")
-                    st.dataframe(filtered_df, width="stretch")
+                    st.dataframe(filtered_df, use_container_width=True) # FIXED WIDTH ERROR
                 else:
                     st.warning(f"No data found for any region in {selected_state}")
             else:
                 # View All Data
                 st.write(f"Total Records: **{len(df)}**")
-                st.dataframe(df, width="stretch")
+                st.dataframe(df, use_container_width=True) # FIXED WIDTH ERROR
         else:
             st.warning("Database is empty or missing 'Main_Location' data.")
 
@@ -552,8 +585,6 @@ def main_app():
             st.subheader(f"Select Records to Delete ({len(df_view)} rows found)")
             
             # Method: Multiselect by ID (Safest & Simplest)
-            # Create a display label combining ID, Date, and Location for clarity
-            # Handle potential missing columns for display safety
             date_col = 'Date' if 'Date' in df_view.columns else 'created_at'
             loc_col = 'Main_Location' if 'Main_Location' in df_view.columns else 'id'
             
@@ -568,7 +599,7 @@ def main_app():
             # Preview Selected
             if selected_ids:
                 st.error(f"You have selected {len(selected_ids)} records for DELETION.")
-                st.dataframe(df[df['id'].isin(selected_ids)])
+                st.dataframe(df[df['id'].isin(selected_ids)], use_container_width=True) # FIXED WIDTH ERROR
                 
                 if st.button("🚨 CONFIRM PERMANENT DELETE"):
                     success = db.delete_data(selected_ids)
