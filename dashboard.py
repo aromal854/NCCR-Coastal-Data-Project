@@ -42,23 +42,80 @@ def main_app():
     # -----------------------------------------------------
     elif menu == "🗺️ Global Data Map":
         st.header("🌍 Global Marine Data Map")
-        st.info("Visualizing all contributed data points.")
+        st.markdown("""
+        **Data Visualization Console**  
+        🔴 Each point represents a verified field data report.  
+        👇 **Hover over points** to see details like Water Temperature, Salinity, and Contributor.
+        """)
         
         df = db.fetch_all_data()
+        import pydeck as pdk # Import locally to avoid global clutter if unused elsewhere
         
         if not df.empty:
             if 'Latitude' in df.columns and 'Longitude' in df.columns:
                 # Filter valid coordinates
-                map_df = df.dropna(subset=['Latitude', 'Longitude'])
+                map_df = df.dropna(subset=['Latitude', 'Longitude']) # Ensure numeric?
                 
+                # Convert coords to numeric just in case
+                map_df['latitude'] = pd.to_numeric(map_df['Latitude'], errors='coerce')
+                map_df['longitude'] = pd.to_numeric(map_df['Longitude'], errors='coerce')
+                map_df = map_df.dropna(subset=['latitude', 'longitude'])
+
                 if not map_df.empty:
-                    # Basic Map
-                    st.map(map_df, latitude='Latitude', longitude='Longitude')
+                    # --- INTERACTIVE MAP METRICS ---
+                    m1, m2, m3 = st.columns(3)
+                    m1.metric("📍 Active Locations", map_df['Main_Location'].nunique())
+                    m2.metric("📝 Total Reports", len(map_df))
+                    m3.metric("📅 Latest Entry", map_df['created_at'].max()[:10] if 'created_at' in map_df else "N/A")
+
+                    st.divider()
+
+                    # --- PYDECK LAYER ---
+                    layer = pdk.Layer(
+                        "ScatterplotLayer",
+                        data=map_df,
+                        get_position='[longitude, latitude]',
+                        get_color='[200, 30, 0, 160]', # Red with transparency
+                        get_radius=2000, # Meters
+                        pickable=True, # Enable Tooltip
+                        radius_min_pixels=8,
+                        radius_max_pixels=30,
+                    )
+
+                    # --- VIEW STATE ---
+                    # Center map on India approx
+                    view_state = pdk.ViewState(
+                        latitude=20.5937,
+                        longitude=78.9629,
+                        zoom=4,
+                        pitch=0,
+                    )
+
+                    # --- TOOLTIP CONFIG ---
+                    tooltip = {
+                        "html": "<b>Location:</b> {Main_Location} <br/>"
+                                "<b>Date:</b> {Date} <br/>"
+                                "<b>Temp:</b> {Water_Temp} °C <br/>"
+                                "<b>Salinity:</b> {Salinity} psu <br/>"
+                                "<b>Contributor:</b> {Contributor}",
+                        "style": {
+                            "backgroundColor": "steelblue",
+                            "color": "white"
+                        }
+                    }
+
+                    # Render
+                    r = pdk.Deck(
+                        layers=[layer],
+                        initial_view_state=view_state,
+                        tooltip=tooltip,
+                        # map_style=None  # Let Streamlit use default (usually CARTO)
+                    )
                     
-                    # Optional: Stats
-                    st.success(f"Displaying **{len(map_df)}** locations.")
+                    st.pydeck_chart(r)
+                    
                 else:
-                    st.warning("No data points with valid coordinates found.")
+                    st.warning("No data points with valid coordinates found after verification.")
             else:
                 st.warning("Dataset missing Latitude/Longitude columns.")
         else:
