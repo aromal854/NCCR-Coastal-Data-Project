@@ -31,6 +31,42 @@ def main_app():
         
     menu = st.sidebar.radio("Go to:", options)
 
+    # --- ADMIN SIDEBAR ANALYTICS (NEW) ---
+    if st.session_state['user_role'] == 'Admin':
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("📊 Live Counters")
+        
+        # Quick Fetch for Stats
+        stats_df = db.fetch_all_data()
+        
+        if not stats_df.empty:
+            total_records = len(stats_df)
+            
+            # Calculate Monthly Growth
+            try:
+                current_month = datetime.now().strftime("%Y-%m")
+                # Ensure string parsing is safe
+                stats_df['temp_month'] = stats_df['created_at'].astype(str).str[:7]
+                new_this_month = len(stats_df[stats_df['temp_month'] == current_month])
+            except:
+                new_this_month = 0
+                
+            # Top Region Logic
+            top_loc = "N/A"
+            if 'Main_Location' in stats_df.columns:
+                try:
+                    top_loc = stats_df['Main_Location'].value_counts().idxmax()
+                    # Optional: Shorten if too long
+                    if len(top_loc) > 15: top_loc = top_loc[:12] + "..."
+                except:
+                    top_loc = "N/A"
+
+            # Display Metrics
+            st.sidebar.metric("Total Data Points", total_records, delta=f"+{new_this_month} this month")
+            st.sidebar.caption(f"🏆 Top Region: **{top_loc}**")
+        else:
+            st.sidebar.warning("No data found.")
+
     # -----------------------------------------------------
     # OPTION: AI PREDICTION TOOLS (NEW)
     # -----------------------------------------------------
