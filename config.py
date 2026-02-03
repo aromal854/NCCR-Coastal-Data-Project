@@ -118,5 +118,6 @@ COLUMN_CONFIG = {
     "Precipitation": "Total Precipitation (mm)",
     "Population": "Coastal Population",
     "Tourist_Inflow": "Annual Tourist Inflow",
-    "Shoreline_Status": "Shoreline Status"
+    "Shoreline_Status": "Shoreline Status",
+    "Water_Body_Type": "Nearby Water Body Type" # Renamed
 }

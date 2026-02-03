@@ -259,12 +259,16 @@ def main_app():
                 with tab_geo:
                     g1, g2, g3 = st.columns(3)
                     shore = g1.selectbox("Shoreline", ["Stable", "Eroding", "Accreting"])
-                    water_bodies = g2.number_input("Nearby Water Bodies", step=1)
-                    indus = g3.number_input("Industrial Est", step=1)
+                    # Renamed, Moved, Removed "Sea/Ocean"
+                    wb_type = g2.selectbox("Nearby Water Body Type", ["Estuary", "River", "Lake", "Lagoon", "Creek", "Backwater", "Other"])
+                    water_bodies = g3.number_input("Nearby Water Bodies (Count)", step=1)
+                    
                     g4, g5, g6 = st.columns(3)
-                    tourism = g4.selectbox("Tourism", ["Active", "Inactive"])
-                    tourist_inflow = g5.number_input("Tourist Inflow", step=100)
-                    season = g6.text_input("Optimum Season")
+                    indus = g4.number_input("Industrial Est", step=1)
+                    tourism = g5.selectbox("Tourism", ["Active", "Inactive"])
+                    tourist_inflow = g6.number_input("Tourist Inflow", step=100)
+                    
+                    season = st.text_input("Optimum Season")
 
                 submitted = st.form_submit_button("🚀 Submit Single Entry")
 
@@ -282,7 +286,8 @@ def main_app():
                         "Phytoplankton": phyto, "Zooplankton": zoo, "Productivity": prod,
                         "Coastal_Villages": villages, "Panchayats": panchayats, "Population": pop,
                         "Fishermen": fishermen, "Fish_Catch": fish, "Landing_Centers": landing,
-                        "Shoreline_Status": shore, "Water_Bodies": water_bodies,
+                        "Shoreline_Status": shore, "Water_Body_Type": wb_type, 
+                        "Water_Bodies": water_bodies,
                         "Industrial_Est": indus, "Tourism_Status": tourism,
                         "Tourist_Inflow": tourist_inflow, "Optimum_Season": season,
                         "created_at": str(datetime.now())

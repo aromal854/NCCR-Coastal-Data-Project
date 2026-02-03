@@ -72,6 +72,7 @@ def map_keys_to_db(data_dict):
         'Humidity': 'humidity', 
         'Precipitation': 'precipitation',
         'Shoreline_Status': 'shoreline_status', 
+        'Water_Body_Type': 'water_body_type', # Added
         'Population': 'population', 
         'Tourist_Inflow': 'tourist_inflow', 
         'Optimum_Season': 'optimum_season',
@@ -197,7 +198,8 @@ def fetch_all_data():
                     'zooplankton': 'Zooplankton',
                     'wind_speed': 'Wind_Speed', 'wind_direction': 'Wind_Direction', 
                     'air_temp': 'Air_Temp', 'humidity': 'Humidity', 'precipitation': 'Precipitation',
-                    'shoreline_status': 'Shoreline_Status', 'population': 'Population', 
+                    'shoreline_status': 'Shoreline_Status', 'water_body_type': 'Water_Body_Type',
+                    'population': 'Population', 
                     'tourist_inflow': 'Tourist_Inflow', 'optimum_season': 'Optimum_Season',
                     'coastal_villages': 'Coastal_Villages', 'panchayats': 'Panchayats', 
                     'fishermen': 'Fishermen', 'landing_centers': 'Landing_Centers', 
