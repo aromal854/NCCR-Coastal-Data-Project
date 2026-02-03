@@ -223,15 +223,18 @@ def main_app():
             if b_coast == "Other" or b_state == "Other State/Region":
                 b_custom = st.text_input("✍️ Type Region Name", key="b_custom")
                 final_bulk_loc = f"{b_state} - {b_custom}" if b_custom else f"{b_state} - Unknown"
+                b_def_lat, b_def_lon = 13.0827, 80.2707
             else:
                 final_bulk_loc = b_coast
+                b_def_lat, b_def_lon = config.REGION_COORDS.get(b_coast, (13.0827, 80.2707))
 
             # --- Details for Bulk Upload ---
             st.write("**Location & Contributor Details for this Batch:**")
             
             b1, b2, b3 = st.columns(3)
-            b_lat = b1.number_input("Latitude", format="%.6f", value=13.0827, key="b_lat")
-            b_lon = b2.number_input("Longitude", format="%.6f", value=80.2707, key="b_lon")
+            # Update key to force refresh
+            b_lat = b1.number_input("Latitude", format="%.6f", value=b_def_lat, key=f"b_lat_{b_coast}")
+            b_lon = b2.number_input("Longitude", format="%.6f", value=b_def_lon, key=f"b_lon_{b_coast}")
             b_spot = b3.text_input("Specific Spot Name", key="b_spot")
             
             b4, b5 = st.columns(2)
