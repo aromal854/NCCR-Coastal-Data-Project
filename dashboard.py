@@ -188,12 +188,15 @@ def main_app():
             if selected_coast == "Other" or selected_state == "Other State/Region":
                 custom_coast = lc3.text_input("✍️ Type Region Name", placeholder="Enter specific region name", key="s_custom")
                 final_main_loc = f"{selected_state} - {custom_coast}" if custom_coast else f"{selected_state} - Unknown"
+                def_lat, def_lon = 13.0827, 80.2707
             else:
                 final_main_loc = selected_coast
+                def_lat, def_lon = config.REGION_COORDS.get(selected_coast, (13.0827, 80.2707))
 
             c1, c2, c3 = st.columns(3)
-            latitude = c1.number_input("Latitude", format="%.6f", value=13.0827, key="s_lat")
-            longitude = c2.number_input("Longitude", format="%.6f", value=80.2707, key="s_lon")
+            # Use dynamic key to force widget update
+            latitude = c1.number_input("Latitude", format="%.6f", value=def_lat, key=f"s_lat_{selected_coast}")
+            longitude = c2.number_input("Longitude", format="%.6f", value=def_lon, key=f"s_lon_{selected_coast}")
             specific_loc = c3.text_input("Specific Spot Name", key="s_spot")
             
             c4, c5, c6, c7 = st.columns(4)
