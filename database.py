@@ -89,7 +89,8 @@ def map_keys_to_db(data_dict):
         'Contributor': 'contributor', 
         'Email': 'email', 
         'Profession': 'profession', 
-        'Designation': 'designation'
+        'Designation': 'designation',
+        'Verified_By': 'verified_by' # Added
     }
     
     new_data = {}
@@ -207,6 +208,7 @@ def fetch_all_data():
                     'industrial_est': 'Industrial_Est', 'tourism_status': 'Tourism_Status',
                     'contributor': 'Contributor', 'email': 'Email', 
                     'profession': 'Profession', 'designation': 'Designation',
+                    'verified_by': 'Verified_By', # Added
                     'date': 'Date', 'time': 'Time', 'created_at': 'created_at'
                 }
                 df.rename(columns=reverse_mapping, inplace=True)

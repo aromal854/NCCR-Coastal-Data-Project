@@ -3,6 +3,17 @@ import streamlit as st
 import auth
 import dashboard
 
+import streamlit as st
+import auth
+import dashboard
+import pages.verify as verify_page # Import the verify page
+
+# --- QUERY PARAM CHECK FOR VERIFICATION ---
+if st.query_params.get("page") == "verify" and st.query_params.get("id"):
+    request_id = st.query_params.get("id")
+    verify_page.show(request_id)
+    st.stop()
+    
 # --- CONFIGURATION ---
 st.set_page_config(
     page_title="NCCR Marine Portal", 

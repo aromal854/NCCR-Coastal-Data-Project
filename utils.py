@@ -5,6 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fpdf import FPDF
 from datetime import date
+import uuid
 import config # Import the config file
 
 # --- HELPER: GENERATE USER ID ---
@@ -33,6 +34,47 @@ def send_email_notification(to_email, subject, message_body):
         return True
     except Exception as e:
         print(f"Email Error: {e}")
+        return False
+
+# --- HELPER: SEND VERIFICATION EMAIL ---
+def send_verification_email(prof_email, prof_name, data_id):
+    """Sends a verification email to the professor."""
+    try:
+        # Construct Magic Link (assuming running locally on default port)
+        # In production, this would be the actual domain
+        link = f"http://localhost:8501/?page=verify&id={data_id}"
+        
+        subject = f"Action Required: Verify Marine Data Contribution"
+        
+        body = f"""
+        Dear Prof. {prof_name},
+        
+        A new marine data contribution requires your expert verification.
+        
+        Please click the link below to review and verify the data:
+        {link}
+        
+        If you did not request this, please ignore this email.
+        
+        Regards,
+        NCCR Marine Data Portal
+        """
+
+        msg = MIMEMultipart()
+        msg['From'] = config.SENDER_EMAIL
+        msg['To'] = prof_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(config.SENDER_EMAIL, config.SENDER_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(config.SENDER_EMAIL, prof_email, text)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Verification Email Error: {e}")
         return False
 
 # --- HELPER: GENERATE PDF CERTIFICATE ---
