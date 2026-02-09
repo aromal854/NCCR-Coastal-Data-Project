@@ -12,17 +12,17 @@ st.set_page_config(
 )
 
 # --- SESSION STATE INITIALIZATION ---
-# We initialize these upfront to prevent errors when switching between files
+# TEMPORARILY BYPASSED FOR TESTING
 if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
+    st.session_state['logged_in'] = True # Force Login
 if 'user_role' not in st.session_state:
-    st.session_state['user_role'] = None
+    st.session_state['user_role'] = "User" # Mock Role
 if 'user_email' not in st.session_state:
-    st.session_state['user_email'] = None
+    st.session_state['user_email'] = "test@nccr.gov.in"
 if 'user_name' not in st.session_state:
-    st.session_state['user_name'] = None
+    st.session_state['user_name'] = "Test User"
 if 'user_id' not in st.session_state:
-    st.session_state['user_id'] = None
+    st.session_state['user_id'] = "TEST_001"
 
 # --- OTP SESSION VARIABLES (For Registration) ---
 if 'otp_generated' not in st.session_state:
