@@ -86,8 +86,8 @@ def clean_marine_data(df):
         
     if 'ph' in mapping:
         c = mapping['ph']
-        # Mask < 6 or > 9
-        df.loc[(df[c] < 6) | (df[c] > 9), c] = np.nan
+        # Mask < 6 or > 10 (Algal Blooms can reach 9.9)
+        df.loc[(df[c] < 6) | (df[c] > 10), c] = np.nan
         
     if 'turbidity' in mapping:
         c = mapping['turbidity']

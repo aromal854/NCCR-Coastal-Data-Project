@@ -44,7 +44,7 @@ def show(request_id):
         st.subheader("📊 Submitted Data")
         
         display_cols = [c for c in batch.columns if c not in ['request_id', 'prof_email', 'prof_name', 'university', 'status']]
-        st.dataframe(batch[display_cols], use_container_width=True)
+        st.dataframe(batch[display_cols], width='stretch')
         
         st.markdown("---")
         st.subheader("Decision")

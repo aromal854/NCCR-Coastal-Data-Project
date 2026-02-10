@@ -235,7 +235,7 @@ def app():
                     bulk_df = pd.read_excel(uploaded_file)
 
                 st.write("📊 **Data Preview:**")
-                st.dataframe(bulk_df.head(), use_container_width=True) 
+                st.dataframe(bulk_df.head(), width='stretch') 
                 
                 if st.button("🚀 Submit Bulk Data for Verification"):
                     if not b_prof_email or not b_prof_name:
@@ -253,7 +253,7 @@ def app():
                                 if "Date and Time" in row:
                                     dt_val = row["Date and Time"]
                                     if pd.notnull(dt_val):
-                                        dt_obj = pd.to_datetime(dt_val)
+                                        dt_obj = pd.to_datetime(dt_val, dayfirst=True)
                                         row_date = str(dt_obj.date())
                                         row_time = str(dt_obj.time())
                                     else:

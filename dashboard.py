@@ -295,13 +295,13 @@ def main_app():
                     # 5. Show Data
                     filtered_df = df[df['Main_Location'] == selected_region]
                     st.info(f"📂 Found **{len(filtered_df)}** records under **{selected_region}**")
-                    st.dataframe(filtered_df, use_container_width=True) # FIXED WIDTH ERROR
+                    st.dataframe(filtered_df, width='stretch') # FIXED WIDTH ERROR
                 else:
                     st.warning(f"No data found for any region in {selected_state}")
             else:
                 # View All Data
                 st.write(f"Total Records: **{len(df)}**")
-                st.dataframe(df, use_container_width=True) # FIXED WIDTH ERROR
+                st.dataframe(df, width='stretch') # FIXED WIDTH ERROR
         else:
             st.warning("Database is empty or missing 'Main_Location' data.")
 
@@ -432,7 +432,7 @@ def main_app():
             # Preview Selected
             if selected_ids:
                 st.error(f"You have selected {len(selected_ids)} records for DELETION.")
-                st.dataframe(df[df['id'].isin(selected_ids)], use_container_width=True) # FIXED WIDTH ERROR
+                st.dataframe(df[df['id'].isin(selected_ids)], width='stretch') # FIXED WIDTH ERROR
                 
                 if st.button("🚨 CONFIRM PERMANENT DELETE"):
                     success = db.delete_data(selected_ids)

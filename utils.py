@@ -74,6 +74,9 @@ def send_verification_email(prof_email, prof_name, data_id):
         server.quit()
         return True
     except Exception as e:
+        if "11001" in str(e) or "getaddrinfo failed" in str(e):
+            print("⚠️ Email Error: No Internet Connection or DNS Failure.")
+            return False
         print(f"Verification Email Error: {e}")
         return False
 
