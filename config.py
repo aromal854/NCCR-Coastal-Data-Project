@@ -1,6 +1,21 @@
 # config.py
 # --- CONFIGURATION & CONSTANTS ---
 
+# Master Column List for CSV Consistency
+MASTER_COLUMNS = [
+    "request_id", "prof_email", "prof_name", "university", "status",
+    "Contributor", "Email", "Profession", "Designation",
+    "Date", "Time", "Main_Location", "Location", "Latitude", "Longitude",
+    "Water_Temp", "Salinity", "Transparency", "Color", "Odour", "Turbidity", "TSS", "pH",
+    "DO", "BOD", "COD", "NH4_N", "NO3_N", "NO2_N", "PO4", "SO4", 
+    "Fecal_Coliform", "Total_Coliform", "Phytoplankton", "Zooplankton", "Productivity",
+    "Coastal_Villages", "Panchayats", "Population", "Fishermen", "Fish_Catch", "Landing_Centers",
+    "Shoreline_Status", "Water_Body_Type", "Water_Bodies", "Industrial_Est", "Tourism_Status",
+    "Tourist_Inflow", "Optimum_Season", "TDS", "Chlorophyll", "BGA", 
+    "Wind_Speed", "Wind_Direction", "Precipitation", "Humidity", "Air_Temp",
+    "created_at", "Verified_By"
+]
+
 # Email Credentials
 SENDER_EMAIL = "aromalvasanth1038@gmail.com" 
 SENDER_PASSWORD = "roou arbj jlmj jlye" 

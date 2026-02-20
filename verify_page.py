@@ -4,23 +4,46 @@ import database as db
 import utils
 import config
 import os
+import numpy as np
+import math
 
 PENDING_CSV = "pending_verification.csv"
 MAIN_CSV = "nccr_data.csv"
 
-def show(request_id):
-    st.set_page_config(page_title="Data Verification", page_icon="✅", layout="wide")
-    st.title("🛡️ External Professor Verification")
+def show(request_id_from_app=None):
+    # Set page config only if not already set (though app.py sets it usually)
+    # st.set_page_config(page_title="Data Verification", page_icon="✅", layout="wide")
     
+    st.title("🛡️ External Professor Verification")
+
+    # If ID passed from app.py, use it. Otherwise try to get from query params (fallback)
+    request_id = request_id_from_app
+    
+    if not request_id:
+        # Helper to get query params safely if needed
+        if hasattr(st, "query_params"):
+            request_id = st.query_params.get("id")
+        else:
+            params = st.experimental_get_query_params()
+            request_id = params.get("id", [None])[0]
+
+    if not request_id:
+        st.error("❌ Invalid or missing Request ID.")
+        st.info("Please use the full link provided in the verification email.")
+        return
+
     if not os.path.exists(PENDING_CSV):
         st.error("No pending verification records found.")
         return
 
     try:
         df = pd.read_csv(PENDING_CSV)
-        # Ensure we look for the request_id as a string
-        # Filter for ALL rows matching the request_id (Batch Support)
-        batch = df[df['request_id'] == request_id]
+        
+        # Ensure requests are strings to match CSV
+        if 'request_id' in df.columns:
+            df['request_id'] = df['request_id'].astype(str)
+            
+        batch = df[df['request_id'] == str(request_id)]
         
         if batch.empty:
             st.warning("⚠️ This verification link is invalid or has already been processed.")
@@ -57,13 +80,33 @@ def show(request_id):
             
             # Add Verified_By to ALL rows in the batch
             batch_to_save = batch.copy()
-            batch_to_save['Verified_By'] = prof_tag
+            batch_to_save['verified_by'] = prof_tag
             
-            # Convert to list of dicts for DB
-            data_list = batch_to_save.to_dict(orient='records')
+            # Convert to list of dicts first
+            raw_data_list = batch_to_save.to_dict(orient='records')
+            
+            # MANUAL CLEANUP: Iterate through every field to catch NaN/Inf
+            # Bypassing Pandas to ensure 100% JSON compliance
+            clean_data_list = []
+            for row in raw_data_list:
+                clean_row = {}
+                for k, v in row.items():
+                    # EXCLUDE TEMP COLUMNS not in DB
+                    if k in ['prof_email', 'prof_name', 'university', 'status', 'request_id']:
+                        continue
+                        
+                    # Check for float NaN or Infinity
+                    if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+                        clean_row[k] = None
+                    # Check for pandas/numpy NaN objects
+                    elif pd.isna(v): 
+                        clean_row[k] = None
+                    else:
+                        clean_row[k] = v
+                clean_data_list.append(clean_row)
             
             # Save to Supabase (Bulk)
-            success, msg = db.save_bulk_data(data_list)
+            success, msg = db.save_bulk_data(clean_data_list)
             
             if success:
                 # Save to nccr_data.csv (Legacy Requirement) - Append Batch
@@ -76,7 +119,7 @@ def show(request_id):
                     print(f"CSV Backup Error: {csv_e}")
                 
                 # Remove from Pending (Filter out this request_id)
-                df_clean = df[df['request_id'] != request_id]
+                df_clean = df[df['request_id'] != str(request_id)]
                 df_clean.to_csv(PENDING_CSV, index=False)
                 
                 st.balloons()
@@ -87,7 +130,7 @@ def show(request_id):
 
         if c2.button("❌ Discard Batch"):
             # Remove from Pending
-            df_clean = df[df['request_id'] != request_id]
+            df_clean = df[df['request_id'] != str(request_id)]
             df_clean.to_csv(PENDING_CSV, index=False)
             st.error("Data batch has been discarded.")
             st.stop()

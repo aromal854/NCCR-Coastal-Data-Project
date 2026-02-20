@@ -6,7 +6,7 @@ import dashboard
 import streamlit as st
 import auth
 import dashboard
-import pages.verify as verify_page # Import the verify page
+import verify_page # Import the verify logic (hidden from sidebar)
 
 # --- QUERY PARAM CHECK FOR VERIFICATION ---
 if st.query_params.get("page") == "verify" and st.query_params.get("id"):

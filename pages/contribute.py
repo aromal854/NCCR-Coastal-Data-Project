@@ -6,8 +6,85 @@ import utils
 import config
 import uuid
 import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 
 PENDING_CSV = "pending_verification.csv"
+
+def send_verification_email(to_email, prof_name, request_id, user_name):
+    # 1. Setup the Email Wrapper
+    msg = MIMEMultipart('related')
+    msg['Subject'] = "[Action Required] Verify Data Submission - NCCR Marine Data Portal"
+    msg['From'] = config.SENDER_EMAIL
+    msg['To'] = to_email
+
+    # 2. Define the Image Path (Use relative path for deployment safety if possible)
+    # Note: Ensure 'emblem.jpg' is in the project folder, or use the full path provided.
+    img_path = r"pages\__pycache__\emblem.jpg" 
+    
+    # 3. Create the HTML Body
+    # We use cid:header_image to reference the attached image inside the HTML
+    html_content = f"""
+    <html>
+      <body>
+        <center>
+          <img src="cid:header_image" alt="NCCR Emblem" style="width: 120px; height: auto;">
+        </center>
+        <p>Dear Prof. {prof_name},</p>
+        <p>Good Day!</p>
+        <p>It is for your information that <b>National Centre for Coastal Research</b>, an attached body of Ministry of Earth Sciences, Govt. of India has taken an initiative for strengthening coastal-ocean data repository for the welfare of Indian coastal Community and various government initiative and missions.</p>
+        <p>As a part of this initiative data can be requested and shared by a Researcher/academician to the NCCR-Marine Data Portal for their advance research and understanding the coastal environment in face of changing nature-human landscape.</p>
+        <p>Therefore, On behalf of above NCCR-Marine Data Portal, I may request to verify my attached data and kindly approve so that it will be placed at the above data portal. This data shall be treated as contributed and verified by <b>Shri. {user_name}</b> and <b>Prof./Dr. {prof_name}</b> jointly.</p>
+        <p>As per the requirement of Data portal, Data has to be verified by the expert within 15 days from date of submission of the data.</p>
+        <p>You may please suggest any other expert(s), in case you preoccupied/unavailable to verify the data.</p>
+        
+        <p>
+            <a href="http://localhost:8501/?page=verify&id={request_id}" 
+               style="background-color: #008CBA; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+               Click Here to Verify Data
+            </a>
+        </p>
+
+        <p>Thank you Sir.</p>
+        <p>With regards,<br><b>{user_name}</b></p>
+      </body>
+    </html>
+    """
+    
+    # Attach HTML part
+    msg.attach(MIMEText(html_content, 'html'))
+
+    # 4. Embed the Image
+    try:
+        with open(img_path, 'rb') as f:
+            img_data = f.read()
+            
+        # Initialize MIMEImage with the correct subtype
+        image = MIMEImage(img_data, _subtype='jpeg', name=os.path.basename(img_path))
+        
+        # Explicitely set Content-ID with angle brackets
+        image.add_header('Content-ID', '<header_image>')
+        
+        # Set Content-Disposition to inline so it displays in the body
+        image.add_header('Content-Disposition', 'inline', filename=os.path.basename(img_path))
+        
+        msg.attach(image)
+    except Exception as e:
+        print(f"Warning: Could not attach emblem image. Error: {e}")
+
+    # 5. Send Email
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(config.SENDER_EMAIL, config.SENDER_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        st.error(f"Email failed to send: {e}")
+        return False
 
 def app():
     st.header("Submit Marine Field Data")
@@ -16,7 +93,10 @@ def app():
     # Initialize State Variables
     certificate_ready = False
     pdf_bytes = None
-    contributor_name = ""
+    
+    # Global User Name Input
+    user_name = st.text_input("Your Name", value=st.session_state.get('user_name', 'Guest'))
+    contributor_name = user_name
 
     # --- MODE SELECTION TABS ---
     tab_single, tab_bulk = st.tabs(["📝 Single Entry (Manual)", "📂 Bulk Upload (CSV/Excel)"])
@@ -26,7 +106,7 @@ def app():
     # ==========================================
     with tab_single:
         st.subheader("1. Location & Profile")
-        st.write(f"**Contributor:** {st.session_state.get('user_name', 'Guest')}")
+        st.write(f"**Contributor:** {user_name}")
         
         lc1, lc2, lc3 = st.columns(3)
         # Use Global COASTAL_DATA from config
@@ -163,14 +243,20 @@ def app():
                     
                     # Save to CSV
                     try:
-                        df_new = pd.DataFrame([data_packet])
+                        # Enforce Master Schema
+                        for col in config.MASTER_COLUMNS:
+                            if col not in data_packet:
+                                data_packet[col] = None
+                                
+                        df_new = pd.DataFrame([data_packet], columns=config.MASTER_COLUMNS)
+                        
                         if os.path.exists(PENDING_CSV):
                             df_new.to_csv(PENDING_CSV, mode='a', header=False, index=False)
                         else:
                             df_new.to_csv(PENDING_CSV, mode='w', header=True, index=False)
                             
                         # Send Email
-                        if utils.send_verification_email(prof_email, prof_name, request_id):
+                        if send_verification_email(prof_email, prof_name, request_id, user_name):
                             st.success(f"✅ Invitation sent to {prof_email}!")
                             st.info("Your data is pending verification. Once approved, it will be added to the database.")
                         else:
@@ -318,7 +404,16 @@ def app():
                         
                         # Save to CSV (Pending Verification)
                         try:
-                            df_new = pd.DataFrame(data_list)
+                            # Enforce Master Schema
+                            # 1. Fill missing columns in each packet
+                            for packet in data_list:
+                                for col in config.MASTER_COLUMNS:
+                                    if col not in packet:
+                                        packet[col] = None
+                            
+                            # 2. Create DataFrame with ordered columns
+                            df_new = pd.DataFrame(data_list, columns=config.MASTER_COLUMNS)
+                            
                             if os.path.exists(PENDING_CSV):
                                 df_new.to_csv(PENDING_CSV, mode='a', header=False, index=False)
                             else:
@@ -327,7 +422,7 @@ def app():
                             my_bar.progress(1.0)
                             
                             # Send Email
-                            if utils.send_verification_email(b_prof_email, b_prof_name, request_id):
+                            if send_verification_email(b_prof_email, b_prof_name, request_id, user_name):
                                 st.success(f"✅ Bulk Data submitted! Verification link sent to Prof. {b_prof_name} ({b_prof_email}).")
                                 st.balloons()
                             else:
