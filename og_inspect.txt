@@ -1,0 +1,30 @@
+Shape: (197719, 15)
+
+Columns:
+  'Date and Time'                                     dtype=datetime64[ns]  197719/197719 non-null
+  'Wind Speed (m/s)'                                  dtype=float64       182390/197719 non-null
+  'Wind Dir (Deg)'                                    dtype=float64       182390/197719 non-null
+  'Total Precipitation (mm)'                          dtype=float64       182390/197719 non-null
+  'WQ Temp (°C)'                                      dtype=object        178511/197719 non-null
+  'pH'                                                dtype=float64       177412/197719 non-null
+  'Turbidity (NTU)'                                   dtype=float64       180016/197719 non-null
+  'TDS (g/L)'                                         dtype=float64       182575/197719 non-null
+  'Chl(ug/l)'                                         dtype=float64       182100/197719 non-null
+  'TSS (mg/L)'                                        dtype=object        180016/197719 non-null
+  'BGA (mg/L)'                                        dtype=float64       182575/197719 non-null
+  'Dissolved Oxygen (mg/L)'                           dtype=float64       178900/197719 non-null
+  'Sal (psu)'                                         dtype=float64       177012/197719 non-null
+  'Rel.Hum (%)'                                       dtype=float64       178659/197719 non-null
+  'Air Temp (°C)'                                     dtype=float64       178659/197719 non-null
+
+First 3 rows:
+        Date and Time  Wind Speed (m/s)  Wind Dir (Deg)  Total Precipitation (mm) WQ Temp (°C)  pH  Turbidity (NTU)  TDS (g/L)  Chl(ug/l) TSS (mg/L)  BGA (mg/L)  Dissolved Oxygen (mg/L)  Sal (psu)  Rel.Hum (%)  Air Temp (°C)
+0 2019-11-15 00:00:00               0.5           120.0                       0.0        27.59 NaN             1.22        0.0       0.89          0        1.85                    5.040        NaN         91.0           26.1
+1 2019-11-15 00:10:00               0.4           145.0                       0.0        27.55 NaN             1.23        0.0       0.99          0        2.07                    5.034        NaN         90.0           26.1
+2 2019-11-15 00:20:00               0.5           123.0                       0.0         27.5 NaN             1.20        0.0       1.03          0        1.90                    5.053        NaN         89.0           26.1
+
+Last 3 rows:
+             Date and Time  Wind Speed (m/s)  Wind Dir (Deg)  Total Precipitation (mm) WQ Temp (°C)    pH  Turbidity (NTU)  TDS (g/L)  Chl(ug/l) TSS (mg/L)  BGA (mg/L)  Dissolved Oxygen (mg/L)  Sal (psu)  Rel.Hum (%)  Air Temp (°C)
+197716 2025-01-09 14:40:00              7.45           115.0                      0.16        26.91  7.93             2.83    0.03129    0.00115          0     0.00300                     7.61      31.33         67.0           26.7
+197717 2025-01-09 14:50:00              7.05            96.0                      0.16        26.88  7.93             2.75    0.03133    0.00118          0     0.00362                     7.55      31.38         68.0           26.7
+197718 2025-01-09 15:00:00              4.75           103.0                      0.16        26.87  7.93             2.84    0.03136    0.00177          0     0.00441                     7.50      31.41         70.0           26.9

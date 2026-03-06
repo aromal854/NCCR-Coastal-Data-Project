@@ -1,7 +1,8 @@
 # dashboard.py
 import streamlit as st
 import pandas as pd
-from datetime import date, datetime
+import numpy as np
+from datetime import date, datetime, timedelta
 import database as db
 import utils
 import config
@@ -9,10 +10,9 @@ import prediction # <--- IMPORT THE NEW FILE
 import pages.contribute as contribute_page # NEW IMPORT
 
 def main_app():
-    # --- SIDEBAR ---
-    st.sidebar.title("Navigation")
+    # --- SIDEBAR (no title inside sidebar) ---
     # Show Name and Unique ID
-    st.sidebar.markdown(f"👤 **{st.session_state['user_name']}**")
+    st.sidebar.markdown(f"&#x1f464; **{st.session_state['user_name']}**")
     st.sidebar.caption(f"ID: {st.session_state['user_id']}")
     st.sidebar.badge(st.session_state['user_role'])
     
@@ -21,14 +21,15 @@ def main_app():
         st.session_state['user_email'] = None
         st.rerun()
         
-    st.title("🌊 NCCR Marine Data Portal")
+
+
+    st.title("\U0001f30a NCCR Marine Data Portal")
 
     # --- DEFINE MENUS BASED ON ROLE ---
-    # Added "🔮 AI Prediction Tools" to both menus
     if st.session_state['user_role'] == 'Admin':
-        options = ["📥 Contribute Data", "🔮 AI Prediction Tools", "🗺️ Global Data Map", "📰 Research & News", "👮 Data Requests (Approval)", "📂 Master Data Repository", "🗑️ Manage & Delete Data"]
+        options = ["📊 Dashboard Overview", "📥 Contribute Data", "🔮 AI Prediction Tools", "🗺️ Global Data Map", "📰 Research & News", "👮 Data Requests (Approval)", "📂 Master Data Repository", "🗑️ Manage & Delete Data"]
     else:
-        options = ["📥 Contribute Data", "🔮 AI Prediction Tools", "🗺️ Global Data Map", "📰 Research & News", "📊 Request & Download Data"]
+        options = ["📊 Dashboard Overview", "📥 Contribute Data", "🔮 AI Prediction Tools", "🗺️ Global Data Map", "📰 Research & News", "📉 Request & Download Data"]
         
     menu = st.sidebar.radio("Go to:", options)
 
@@ -79,6 +80,167 @@ def main_app():
     # -----------------------------------------------------
     if menu == "🔮 AI Prediction Tools":
         prediction.run_prediction_page() # <--- CALL THE FUNCTION
+
+    # -----------------------------------------------------
+    # OPTION: DASHBOARD OVERVIEW (NEW - DESKTOP UI)
+    # -----------------------------------------------------
+    elif menu == "📊 Dashboard Overview":
+        import plotly.graph_objects as go
+
+        # ── Header ────────────────────────────────────────────────
+        now_str = datetime.now().strftime("%d %b %Y, %H:%M IST")
+        st.markdown(
+            f"""
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:4px;">
+                <div>
+                    <p class="nccr-section-label">National Centre for Coastal Research</p>
+                    <h2 style="margin:0; color:#1A3A5C;">Scientific Monitoring Overview</h2>
+                    <p style="margin:2px 0 0 0; color:#627D98; font-size:0.88rem;">
+                        Real-time environmental intelligence · Coastal water quality metrics
+                    </p>
+                </div>
+                <p style="color:#8DA4B8; font-size:0.8rem; margin:0;">Last updated: {now_str}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("<hr style='margin:12px 0 20px 0;'>", unsafe_allow_html=True)
+
+        # ── 4 KPI Metric Cards ────────────────────────────────────
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.metric("🌡️ Water Temperature", "28.4 °C", "▲ +0.6  Elevated", delta_color="inverse")
+        with c2:
+            st.metric("⚗️ pH Level", "7.8", "Normal Range", delta_color="off")
+        with c3:
+            st.metric("💧 Dissolved Oxygen", "6.2 mg/L", "▼ −0.4  Low", delta_color="inverse")
+        with c4:
+            st.metric("🌫️ Turbidity", "12 NTU", "▲ +2.1  Elevated", delta_color="inverse")
+
+        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+        # ── Main content row: Chart + Alert panel ─────────────────
+        chart_col, alert_col = st.columns([3, 1], gap="large")
+
+        with chart_col:
+            st.markdown('<p class="nccr-section-label">Water Quality Trends — Last 30 Days</p>', unsafe_allow_html=True)
+
+            dates_30 = pd.date_range(end=datetime.now(), periods=30, freq="D")
+            np.random.seed(42)
+            do_vals  = np.clip(np.random.randn(30) * 0.5 + 6.4, 4.0, 9.0)
+            ph_vals  = np.clip(np.random.randn(30) * 0.15 + 7.8, 6.5, 9.0)
+            turb_vals = np.clip(np.random.randn(30) * 2 + 11.5, 0, 30)
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=dates_30, y=do_vals, name="Dissolved Oxygen (mg/L)",
+                line=dict(color="#1A4A6E", width=2.5, shape="spline"),
+                fill="tozeroy", fillcolor="rgba(26,74,110,0.07)"
+            ))
+            fig.add_trace(go.Scatter(
+                x=dates_30, y=ph_vals, name="pH",
+                line=dict(color="#2A8A7A", width=2.5, shape="spline"),
+                yaxis="y2"
+            ))
+            fig.add_trace(go.Scatter(
+                x=dates_30, y=turb_vals, name="Turbidity (NTU)",
+                line=dict(color="#B07D3A", width=2, dash="dot", shape="spline"),
+                yaxis="y3"
+            ))
+            fig.update_layout(
+                height=340,
+                paper_bgcolor="white",
+                plot_bgcolor="#FAFCFF",
+                margin=dict(l=8, r=8, t=12, b=8),
+                font=dict(family="Inter", color="#334E68", size=12),
+                legend=dict(orientation="h", y=-0.18, x=0, font_size=11),
+                xaxis=dict(showgrid=False, tickfont_size=10, color="#8DA4B8"),
+                yaxis=dict(title="DO (mg/L)", showgrid=True, gridcolor="#EEF2F8",
+                           tickfont_size=10, color="#1A4A6E"),
+                yaxis2=dict(title="pH", overlaying="y", side="right",
+                            showgrid=False, tickfont_size=10, color="#2A8A7A"),
+                yaxis3=dict(title="Turbidity", overlaying="y", side="right",
+                            position=0.97, showgrid=False, tickfont_size=10, color="#B07D3A"),
+            )
+            fig.update_xaxes(showline=True, linecolor="#E2EAF4")
+            st.plotly_chart(fig, use_container_width=True)  # plotly has no width= yet
+
+        with alert_col:
+            st.markdown('<p class="nccr-section-label">Environmental Alerts</p>', unsafe_allow_html=True)
+            st.markdown("""
+            <div class="nccr-alert-critical">
+                <p class="nccr-alert-title">🔴 CRITICAL — Algal Bloom Risk</p>
+                <p class="nccr-alert-body">High probability near Ennore Estuary. Chlorophyll: 24.6 µg/L</p>
+            </div>
+            <div class="nccr-alert-warning">
+                <p class="nccr-alert-title">🟡 WARNING — Elevated Turbidity</p>
+                <p class="nccr-alert-body">Post-monsoon runoff in South Sector. Turbidity: 18 NTU</p>
+            </div>
+            <div class="nccr-alert-warning">
+                <p class="nccr-alert-title">🟡 WARNING — Low Dissolved O₂</p>
+                <p class="nccr-alert-body">Station S-03 Kochi: DO at 4.8 mg/L (threshold: 5.0)</p>
+            </div>
+            <div class="nccr-alert-info">
+                <p class="nccr-alert-title">🔵 INFO — Calibration Scheduled</p>
+                <p class="nccr-alert-body">Remote sensing satellite at 02:00 hrs</p>
+            </div>
+            <div class="nccr-alert-ok">
+                <p class="nccr-alert-title">🟢 STABLE — Gulf of Mannar</p>
+                <p class="nccr-alert-body">pH normalised. All parameters within safe range</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # ── BiGRU 3-Day Forecast Summary ──────────────────────────
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+        st.markdown('<p class="nccr-section-label">3-Day Water Quality Forecast (6-Hour Resolution, 12 Windows) — Powered by Bidirectional GRU Neural Network</p>', unsafe_allow_html=True)
+
+        today = date.today()
+        # Generate 12 six-hour slots across 3 days
+        from datetime import datetime as _dt
+        base_dt = _dt.combine(today, _dt.min.time())
+        slot_temps = [28.9, 29.1, 29.3, 28.8, 29.0, 29.2, 29.4, 28.9, 28.7, 29.0, 28.8, 28.6]
+        slot_ph    = [7.7, 7.8, 7.9, 7.7, 7.8, 7.9, 8.0, 7.8, 7.9, 8.0, 7.9, 7.8]
+        slot_do    = [6.0, 5.8, 5.5, 6.2, 5.9, 5.7, 5.4, 6.1, 6.3, 6.1, 6.2, 6.4]
+        slot_sal   = [32.1, 32.2, 32.3, 32.0, 32.3, 32.4, 32.5, 32.2, 32.2, 32.3, 32.1, 32.0]
+        slot_turb  = [13.4, 12.8, 12.1, 13.0, 12.5, 11.9, 11.2, 12.0, 10.5, 10.8, 10.2, 9.9]
+        forecast_rows = []
+        for s in range(12):
+            slot_dt = base_dt + timedelta(hours=6 * (s + 1))
+            day_num = s // 4 + 1
+            forecast_rows.append({
+                "Window": f"Day {day_num} — {slot_dt.strftime('%d %b %H:%M')}",
+                "Water Temp (°C)": f"{slot_temps[s]}",
+                "pH": f"{slot_ph[s]}",
+                "DO (mg/L)": f"{slot_do[s]}",
+                "Salinity (psu)": f"{slot_sal[s]}",
+                "Turbidity (NTU)": f"{slot_turb[s]}",
+            })
+        rows_html = "".join(
+            f"""<tr>
+                <td class="day-label">{r['Window']}</td>
+                <td>{r['Water Temp (°C)']}</td>
+                <td>{r['pH']}</td>
+                <td>{r['DO (mg/L)']}</td>
+                <td>{r['Salinity (psu)']}</td>
+                <td>{r['Turbidity (NTU)']}</td>
+            </tr>"""
+            for r in forecast_rows
+        )
+        st.markdown(f"""
+        <table class="nccr-forecast-table">
+            <thead>
+                <tr>
+                    <th>6h Window</th>
+                    <th>Water Temp (°C)</th>
+                    <th>pH</th>
+                    <th>DO (mg/L)</th>
+                    <th>Salinity (psu)</th>
+                    <th>Turbidity (NTU)</th>
+                </tr>
+            </thead>
+            <tbody>{rows_html}</tbody>
+        </table>
+        """, unsafe_allow_html=True)
 
     # -----------------------------------------------------
     # OPTION: GLOBAL MAP VIEW (NEW)

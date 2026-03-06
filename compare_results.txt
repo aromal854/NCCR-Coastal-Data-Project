@@ -1,0 +1,150 @@
+=================================================================
+NCCR Marine Portal -- Model Comparison Study
+Dataset: Chennai_2019-2024.xlsx
+=================================================================
+
+[DATA] Raw shape: (36890, 17)
+[DATA] Columns:
+       'Date and Time'                                     dtype=datetime64[ns]  36890/36890 non-null
+       'Wind Speed (m/s)'                                  dtype=float64     36883/36890 non-null
+       'Wind Dir (Deg)'                                    dtype=float64     36883/36890 non-null
+       'Total Precipitation (mm)'                          dtype=float64     36883/36890 non-null
+       'WQ Temp (°C)'                                      dtype=float64     36040/36890 non-null
+       'pH'                                                dtype=float64     34718/36890 non-null
+       'Turbidity (NTU)'                                   dtype=float64     36883/36890 non-null
+       'TDS (g/L)'                                         dtype=float64     36890/36890 non-null
+       'Chl(ug/l)'                                         dtype=float64     36054/36890 non-null
+       'TSS (mg/L)'                                        dtype=object      36883/36890 non-null
+       'BGA (mg/L)'                                        dtype=float64     36890/36890 non-null
+       'Dissolved Oxygen (mg/L)'                           dtype=float64     36002/36890 non-null
+       'Sal (psu)'                                         dtype=float64     35749/36890 non-null
+       'Rel.Hum (%)'                                       dtype=float64     36079/36890 non-null
+       'Air Temp (°C)'                                     dtype=float64     36079/36890 non-null
+       'Year'                                              dtype=int64       36890/36890 non-null
+       'Month'                                             dtype=int64       36890/36890 non-null
+
+[PREP] Date column: 'Date and Time'
+
+[PREP] Features (8): ['WQ Temp (°C)', 'pH', 'Sal (psu)', 'Dissolved Oxygen (mg/L)', 'Chl(ug/l)', 'Wind Speed (m/s)', 'Wind Dir (Deg)', 'Total Precipitation (mm)']
+[PREP] Daily records after pipeline: 344 days  (2022-01-01 to 2022-12-10)
+[PREP] log1p applied to Chlorophyll: 'Chl(ug/l)'
+
+[SPLIT] Train: 268 samples | Test: 67 samples
+
+-----------------------------------------------------------------
+MODEL 1/5: Linear Regression
+
+  [Linear Regression]
+  Train time  : 0.0s
+  Avg MAE     : 7.9275
+  Avg RMSE    : 11.4818
+  Avg MAPE    : 5884155.19%
+  Accuracy    : 0.0%
+  Per-parameter:
+    WQ Temp (°C)                              MAE=0.4707  RMSE=0.6016  MAPE=1.65%
+    pH                                        MAE=0.1265  RMSE=0.1776  MAPE=1.55%
+    Sal (psu)                                 MAE=1.6590  RMSE=2.3949  MAPE=6.82%
+    Dissolved Oxygen (mg/L)                   MAE=0.8101  RMSE=1.2529  MAPE=13.07%
+    Chl(ug/l)                                 MAE=3.0783  RMSE=5.9879  MAPE=103.75%
+    Wind Speed (m/s)                          MAE=1.4247  RMSE=2.1914  MAPE=32.08%
+    Wind Dir (Deg)                            MAE=52.4460  RMSE=68.3678  MAPE=31.02%
+    Total Precipitation (mm)                  MAE=3.4047  RMSE=10.8804  MAPE=47073051.55%
+
+-----------------------------------------------------------------
+MODEL 2/5: Random Forest (100 trees)
+
+  [Random Forest]
+  Train time  : 0.3s
+  Avg MAE     : 5.1987
+  Avg RMSE    : 8.5566
+  Avg MAPE    : 2238564.91%
+  Accuracy    : 0.0%
+  Per-parameter:
+    WQ Temp (°C)                              MAE=1.0493  RMSE=1.2966  MAPE=3.61%
+    pH                                        MAE=0.2635  RMSE=0.3480  MAPE=3.29%
+    Sal (psu)                                 MAE=2.1325  RMSE=2.6399  MAPE=8.24%
+    Dissolved Oxygen (mg/L)                   MAE=0.9354  RMSE=1.0874  MAPE=14.39%
+    Chl(ug/l)                                 MAE=4.3400  RMSE=8.9162  MAPE=112.68%
+    Wind Speed (m/s)                          MAE=1.3715  RMSE=2.2022  MAPE=28.94%
+    Wind Dir (Deg)                            MAE=28.6313  RMSE=41.2473  MAPE=19.99%
+    Total Precipitation (mm)                  MAE=2.8665  RMSE=10.7151  MAPE=17908328.11%
+
+[DL] epochs=134  batch=26  n_feat=8
+
+-----------------------------------------------------------------
+MODEL 3/5: LSTM
+  Epochs run: 76  Final val_loss: 0.077591
+
+  [LSTM]
+  Train time  : 19.2s
+  Avg MAE     : 5.9921
+  Avg RMSE    : 9.5264
+  Avg MAPE    : 5216520.33%
+  Accuracy    : 0.0%
+  Per-parameter:
+    WQ Temp (°C)                              MAE=0.7941  RMSE=0.9244  MAPE=2.75%
+    pH                                        MAE=0.2104  RMSE=0.2723  MAPE=2.61%
+    Sal (psu)                                 MAE=2.2942  RMSE=2.6427  MAPE=9.40%
+    Dissolved Oxygen (mg/L)                   MAE=0.7945  RMSE=0.9253  MAPE=12.34%
+    Chl(ug/l)                                 MAE=3.3518  RMSE=8.7130  MAPE=68.68%
+    Wind Speed (m/s)                          MAE=1.5111  RMSE=2.2821  MAPE=33.47%
+    Wind Dir (Deg)                            MAE=35.7924  RMSE=49.7191  MAPE=22.46%
+    Total Precipitation (mm)                  MAE=3.1880  RMSE=10.7322  MAPE=41732010.91%
+
+-----------------------------------------------------------------
+MODEL 4/5: GRU
+  Epochs run: 15  Final val_loss: 0.090870
+
+  [GRU]
+  Train time  : 7.4s
+  Avg MAE     : 9.7318
+  Avg RMSE    : 13.2065
+  Avg MAPE    : 19032410.70%
+  Accuracy    : 0.0%
+  Per-parameter:
+    WQ Temp (°C)                              MAE=1.7305  RMSE=2.0321  MAPE=5.93%
+    pH                                        MAE=0.4952  RMSE=0.5697  MAPE=5.89%
+    Sal (psu)                                 MAE=6.5251  RMSE=7.6608  MAPE=25.20%
+    Dissolved Oxygen (mg/L)                   MAE=2.4949  RMSE=2.6453  MAPE=38.91%
+    Chl(ug/l)                                 MAE=3.9842  RMSE=9.7814  MAPE=59.14%
+    Wind Speed (m/s)                          MAE=3.0726  RMSE=4.0226  MAPE=65.95%
+    Wind Dir (Deg)                            MAE=54.7027  RMSE=68.2920  MAPE=30.64%
+    Total Precipitation (mm)                  MAE=4.8496  RMSE=10.6482  MAPE=152259053.90%
+
+-----------------------------------------------------------------
+MODEL 5/5: BiGRU
+  Epochs run: 15  Final val_loss: 0.081876
+
+  [BiGRU]
+  Train time  : 12.4s
+  Avg MAE     : 18.7440
+  Avg RMSE    : 21.2129
+  Avg MAPE    : 28214336.80%
+  Accuracy    : 0.0%
+  Per-parameter:
+    WQ Temp (°C)                              MAE=0.7546  RMSE=0.9242  MAPE=2.61%
+    pH                                        MAE=0.3740  RMSE=0.4579  MAPE=4.44%
+    Sal (psu)                                 MAE=2.9276  RMSE=3.5908  MAPE=11.86%
+    Dissolved Oxygen (mg/L)                   MAE=2.1360  RMSE=2.3712  MAPE=33.24%
+    Chl(ug/l)                                 MAE=3.8978  RMSE=9.6733  MAPE=52.00%
+    Wind Speed (m/s)                          MAE=2.8693  RMSE=3.7039  MAPE=69.77%
+    Wind Dir (Deg)                            MAE=130.4687  RMSE=137.3454  MAPE=66.86%
+    Total Precipitation (mm)                  MAE=6.5239  RMSE=11.6362  MAPE=225714453.63%
+
+=================================================================
+FINAL COMPARISON TABLE
+=================================================================
+            Model  Avg MAE  Avg RMSE  Avg MAPE (%)  Accuracy (%)  Train Time (s)
+    Random Forest   5.1987    8.5566    2238564.91           0.0             0.3
+             LSTM   5.9921    9.5264    5216520.33           0.0            19.2
+Linear Regression   7.9275   11.4818    5884155.19           0.0             0.0
+              GRU   9.7318   13.2065   19032410.70           0.0             7.4
+            BiGRU  18.7440   21.2129   28214336.80           0.0            12.4
+
+RMSE Improvement over Linear Regression baseline:
+  Random Forest         +25.5%
+  LSTM                  +17.0%
+  GRU                   -15.0%
+  BiGRU                 -84.8%
+
+[DONE] Results saved to c:\Users\arjun\Desktop\Marine_Project\compare_results.txt

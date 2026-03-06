@@ -3,4 +3,8 @@ pandas
 supabase
 fpdf
 bcrypt
-openpyxl  
+openpyxl
+scikit-learn
+tensorflow
+numpy
+plotly
