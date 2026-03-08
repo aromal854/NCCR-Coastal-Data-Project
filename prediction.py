@@ -141,6 +141,9 @@ def clean_marine_data(df) -> "tuple[pd.DataFrame, dict, dict, str] | tuple[None,
         df[date_col] = df[date_col].astype("datetime64[ns]")
         df = df.dropna(subset=[date_col])
         df = df.set_index(date_col).sort_index()
+        # Drop duplicates in index and columns to prevent pandas alignment errors
+        df = df.loc[~df.index.duplicated(keep='first')]
+        df = df.loc[:, ~df.columns.duplicated()]
     except Exception as e:
         st.error(f"❌ Error converting '{date_col}' to datetime: {e}")
         return None, None, None, None
@@ -224,7 +227,9 @@ def load_data():
         df = (pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv')
               else pd.read_excel(uploaded_file))
 
+        pd.set_option('future.no_silent_downcasting', True)
         df = df.replace(['BTL', 'BDL', 'btl', 'bdl'], 0.0)
+        df = df.infer_objects(copy=False)
         date_col = next(
             (c for c in df.columns
              if "date" in c.lower() or "time" in c.lower() or "timestamp" in c.lower()),
@@ -290,7 +295,8 @@ def load_data():
         return cleaned_df, date_col_name
 
     except Exception as e:
-        st.error(f"❌ Error reading file: {e}")
+        import traceback
+        st.error(f"❌ Error reading file: {e}\n\n```\n{traceback.format_exc()}\n```")
         return None, None
 
 

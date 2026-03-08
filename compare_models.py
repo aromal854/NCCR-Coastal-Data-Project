@@ -199,16 +199,16 @@ tf.get_logger().setLevel('ERROR')
 y_train_dl = y_train.reshape(-1, FORECAST, n_feat)
 
 n_samples = len(X_train)
-EPOCHS    = min(150, max(60, n_samples // 2))
-BATCH     = min(64, max(16, n_samples // 10))
+EPOCHS    = 300
+BATCH     = 32
 
 p(f"\n[DL] epochs={EPOCHS}  batch={BATCH}  n_feat={n_feat}")
 
 callbacks = [
-    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=15,
+    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=40,
                                      restore_best_weights=True, verbose=0),
     tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5,
-                                         patience=7, min_lr=1e-6, verbose=0),
+                                         patience=10, min_lr=1e-6, verbose=0),
 ]
 
 def build_and_train(arch):
@@ -217,19 +217,28 @@ def build_and_train(arch):
         x = tf.keras.layers.LSTM(64, return_sequences=True)(inp)
         x = tf.keras.layers.Dropout(0.2)(x)
         x = tf.keras.layers.LSTM(32)(x)
+        x = tf.keras.layers.Dropout(0.2)(x)
     elif arch == "GRU":
         x = tf.keras.layers.GRU(64, return_sequences=True)(inp)
         x = tf.keras.layers.Dropout(0.2)(x)
         x = tf.keras.layers.GRU(32)(x)
-    else:  # BiGRU
-        x = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(64, return_sequences=True))(inp)
         x = tf.keras.layers.Dropout(0.2)(x)
-        x = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(32))(x)
-    x = tf.keras.layers.Dropout(0.2)(x)
+    else:  # BiGRU
+        x = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(64, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(1e-5)))(inp)
+        x = tf.keras.layers.LayerNormalization()(x)
+        x = tf.keras.layers.Dropout(0.2)(x)
+        x = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(32, kernel_regularizer=tf.keras.regularizers.l2(1e-5)))(x)
+        x = tf.keras.layers.LayerNormalization()(x)
+        x = tf.keras.layers.Dropout(0.2)(x)
+        
     out = tf.keras.layers.Dense(FORECAST * n_feat)(x)
     out = tf.keras.layers.Reshape((FORECAST, n_feat))(out)
     m = tf.keras.Model(inp, out)
-    m.compile(optimizer=tf.keras.optimizers.Adam(1e-3), loss='mae')
+    
+    if arch == "BiGRU":
+        m.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), loss='mae')
+    else:
+        m.compile(optimizer=tf.keras.optimizers.Adam(1e-3), loss='mae')
     t0 = time.time()
     hist = m.fit(X_train, y_train_dl,
                  epochs=EPOCHS, batch_size=BATCH,

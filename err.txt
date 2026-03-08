@@ -1,0 +1,21 @@
+❌ Error reading file: 
+
+```
+Traceback (most recent call last):
+  File "C:\Users\arjun\Desktop\Marine_Project\prediction.py", line 239, in load_data
+    cleaned_df, mapping, report, date_col_name = clean_marine_data(df)
+                                                 ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\arjun\Desktop\Marine_Project\prediction.py", line 193, in clean_marine_data
+    df = df.fillna(df.shift(periods=days, freq='D'))
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\arjun\Desktop\Marine_Project\.venv\Lib\site-packages\pandas\core\generic.py", line 7461, in fillna
+    new_data = self.where(self.notna(), value)._mgr
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\arjun\Desktop\Marine_Project\.venv\Lib\site-packages\pandas\core\generic.py", line 11048, in where
+    return self._where(cond, other, inplace, axis, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\arjun\Desktop\Marine_Project\.venv\Lib\site-packages\pandas\core\generic.py", line 10766, in _where
+    raise InvalidIndexError
+pandas.errors.InvalidIndexError
+
+```

@@ -130,26 +130,28 @@ tf.get_logger().setLevel('ERROR')
 
 model = Sequential([
     Input(shape=(LOOKBACK_SLOTS, n_feat)),
-    Bidirectional(GRU(64, return_sequences=True)),
+    Bidirectional(GRU(64, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(1e-5))),
+    tf.keras.layers.LayerNormalization(),
     Dropout(0.2),
-    Bidirectional(GRU(32)),
+    Bidirectional(GRU(32, kernel_regularizer=tf.keras.regularizers.l2(1e-5))),
+    tf.keras.layers.LayerNormalization(),
     Dropout(0.2),
     Dense(FORECAST_SLOTS * n_feat, activation='linear'),
     Reshape((FORECAST_SLOTS, n_feat)),
 ])
-model.compile(optimizer='adam', loss='mae', metrics=['mse'])
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), loss='mae', metrics=['mse'])
 model.summary()
 
 # ── 6. Train ──────────────────────────────────────────────────────────────────
 callbacks = [
-    EarlyStopping(monitor='val_loss', patience=12, restore_best_weights=True, verbose=1),
-    ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-5, verbose=1),
+    EarlyStopping(monitor='val_loss', patience=40, restore_best_weights=True, verbose=1),
+    ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, min_lr=1e-6, verbose=1),
 ]
 
 print("\n[START] Training BiGRU...")
 history = model.fit(
     X, y,
-    epochs=100,
+    epochs=300,
     batch_size=32,
     validation_split=0.15,
     callbacks=callbacks,

@@ -41,7 +41,7 @@ MODEL 1/5: Linear Regression (Baseline)
 -----------------------------------------------------------------
 MODEL 2/5: Random Forest (100 trees)
 
-  [Random Forest]  train_time=0.3s
+  [Random Forest]  train_time=0.4s
   Avg MAE=1.4996  RMSE=2.9721  MAPE=2236845.52%  Acc=0.0%
     WQ Temp (°C)                              MAE=0.4431  RMSE=0.6249  MAPE=1.55%
     pH                                        MAE=0.1129  RMSE=0.1676  MAPE=1.44%
@@ -49,82 +49,82 @@ MODEL 2/5: Random Forest (100 trees)
     Dissolved Oxygen (mg/L)                   MAE=0.9782  RMSE=1.4822  MAPE=42.74%
     Chl(ug/l)                                 MAE=3.9014  RMSE=9.1143  MAPE=11184159.86%
 
-[DL] epochs_max=300  batch=64  n_feat=5  train_samples=1499
+[DL] epochs_max=300  batch=32  n_feat=5  train_samples=1499
 
 -----------------------------------------------------------------
 MODEL 3/5: LSTM
-  Epochs: 227  val_loss: 0.064355
+  Epochs: 156  val_loss: 0.060678
 
-  [LSTM]  train_time=41.8s
-  Avg MAE=1.1697  RMSE=2.6690  MAPE=289746.10%  Acc=0.0%
-    WQ Temp (°C)                              MAE=0.3522  RMSE=0.5124  MAPE=1.23%
-    pH                                        MAE=0.0768  RMSE=0.1485  MAPE=0.98%
-    Sal (psu)                                 MAE=1.5657  RMSE=3.5494  MAPE=13.07%
-    Dissolved Oxygen (mg/L)                   MAE=0.5455  RMSE=0.8085  MAPE=15.60%
-    Chl(ug/l)                                 MAE=3.3085  RMSE=8.3263  MAPE=1448699.62%
+  [LSTM]  train_time=46.2s
+  Avg MAE=1.1222  RMSE=2.5508  MAPE=122404.95%  Acc=0.0%
+    WQ Temp (°C)                              MAE=0.3255  RMSE=0.4870  MAPE=1.13%
+    pH                                        MAE=0.0782  RMSE=0.1471  MAPE=0.99%
+    Sal (psu)                                 MAE=1.5505  RMSE=3.3466  MAPE=13.31%
+    Dissolved Oxygen (mg/L)                   MAE=0.5320  RMSE=0.7863  MAPE=15.59%
+    Chl(ug/l)                                 MAE=3.1251  RMSE=7.9870  MAPE=611993.72%
 
 -----------------------------------------------------------------
 MODEL 4/5: GRU
-  Epochs: 25  val_loss: 0.084435
+  Epochs: 40  val_loss: 0.069916
 
-  [GRU]  train_time=6.6s
-  Avg MAE=3.9766  RMSE=5.4089  MAPE=6384931.26%  Acc=0.0%
-    WQ Temp (°C)                              MAE=1.1396  RMSE=1.4112  MAPE=3.98%
-    pH                                        MAE=0.3214  RMSE=0.3893  MAPE=4.09%
-    Sal (psu)                                 MAE=10.2514  RMSE=11.9798  MAPE=59.22%
-    Dissolved Oxygen (mg/L)                   MAE=1.3469  RMSE=1.6621  MAPE=45.74%
-    Chl(ug/l)                                 MAE=6.8237  RMSE=11.6024  MAPE=31924543.29%
+  [GRU]  train_time=11.7s
+  Avg MAE=2.5204  RMSE=4.1635  MAPE=3161153.96%  Acc=0.0%
+    WQ Temp (°C)                              MAE=0.9609  RMSE=1.1861  MAPE=3.30%
+    pH                                        MAE=0.1885  RMSE=0.2507  MAPE=2.45%
+    Sal (psu)                                 MAE=5.2712  RMSE=6.7187  MAPE=53.23%
+    Dissolved Oxygen (mg/L)                   MAE=1.2662  RMSE=1.5958  MAPE=46.64%
+    Chl(ug/l)                                 MAE=4.9151  RMSE=11.0664  MAPE=15805664.18%
 
 -----------------------------------------------------------------
 MODEL 5/5: BiGRU
-  Epochs: 25  val_loss: 0.068151
+  Epochs: 40  val_loss: 0.130512
 
-  [BiGRU]  train_time=10.2s
-  Avg MAE=2.5299  RMSE=4.1590  MAPE=2371273.91%  Acc=0.0%
-    WQ Temp (°C)                              MAE=0.7667  RMSE=0.9729  MAPE=2.67%
-    pH                                        MAE=0.2534  RMSE=0.3313  MAPE=3.27%
-    Sal (psu)                                 MAE=4.7710  RMSE=6.0737  MAPE=45.43%
-    Dissolved Oxygen (mg/L)                   MAE=1.6364  RMSE=2.0209  MAPE=59.54%
-    Chl(ug/l)                                 MAE=5.2216  RMSE=11.3961  MAPE=11856258.66%
+  [BiGRU]  train_time=16.0s
+  Avg MAE=2.7662  RMSE=4.4737  MAPE=3063935.19%  Acc=0.0%
+    WQ Temp (°C)                              MAE=0.9968  RMSE=1.2462  MAPE=3.47%
+    pH                                        MAE=0.4531  RMSE=0.6331  MAPE=5.95%
+    Sal (psu)                                 MAE=5.4285  RMSE=7.6142  MAPE=65.23%
+    Dissolved Oxygen (mg/L)                   MAE=1.4787  RMSE=1.8478  MAPE=42.29%
+    Chl(ug/l)                                 MAE=5.4739  RMSE=11.0270  MAPE=15319559.01%
 
 =================================================================
 FINAL COMPARISON TABLE
 =================================================================
             Model  Avg_MAE  Avg_RMSE   Avg_MAPE  Accuracy  Train_s
 Linear Regression   1.0399    2.4241  362654.60       0.0      0.0
-    Random Forest   1.4996    2.9721 2236845.52       0.0      0.3
-             LSTM   1.1697    2.6690  289746.10       0.0     41.8
-              GRU   3.9766    5.4089 6384931.26       0.0      6.6
-            BiGRU   2.5299    4.1590 2371273.91       0.0     10.2
+    Random Forest   1.4996    2.9721 2236845.52       0.0      0.4
+             LSTM   1.1222    2.5508  122404.95       0.0     46.2
+              GRU   2.5204    4.1635 3161153.96       0.0     11.7
+            BiGRU   2.7662    4.4737 3063935.19       0.0     16.0
 
 Per-parameter MAE:
             Model  MAE_WQ Temp  MAE_pH  MAE_Sal  MAE_Dissolved Oxygen  MAE_Chl
 Linear Regression       0.3121  0.0623   1.3602                0.4852   2.9800
     Random Forest       0.4431  0.1129   2.0624                0.9782   3.9014
-             LSTM       0.3522  0.0768   1.5657                0.5455   3.3085
-              GRU       1.1396  0.3214  10.2514                1.3469   6.8237
-            BiGRU       0.7667  0.2534   4.7710                1.6364   5.2216
+             LSTM       0.3255  0.0782   1.5505                0.5320   3.1251
+              GRU       0.9609  0.1885   5.2712                1.2662   4.9151
+            BiGRU       0.9968  0.4531   5.4285                1.4787   5.4739
 
 Per-parameter RMSE:
             Model  RMSE_WQ Temp  RMSE_pH  RMSE_Sal  RMSE_Dissolved Oxygen  RMSE_Chl
 Linear Regression        0.4704   0.1243    3.1612                 0.7506    7.6138
     Random Forest        0.6249   0.1676    3.4715                 1.4822    9.1143
-             LSTM        0.5124   0.1485    3.5494                 0.8085    8.3263
-              GRU        1.4112   0.3893   11.9798                 1.6621   11.6024
-            BiGRU        0.9729   0.3313    6.0737                 2.0209   11.3961
+             LSTM        0.4870   0.1471    3.3466                 0.7863    7.9870
+              GRU        1.1861   0.2507    6.7187                 1.5958   11.0664
+            BiGRU        1.2462   0.6331    7.6142                 1.8478   11.0270
 
 Per-parameter MAPE (%):
             Model  MAPE_WQ Temp  MAPE_pH  MAPE_Sal  MAPE_Dissolved Oxygen    MAPE_Chl
 Linear Regression          1.09     0.79      8.77                  13.82  1813248.52
     Random Forest          1.55     1.44     22.01                  42.74 11184159.86
-             LSTM          1.23     0.98     13.07                  15.60  1448699.62
-              GRU          3.98     4.09     59.22                  45.74 31924543.29
-            BiGRU          2.67     3.27     45.43                  59.54 11856258.66
+             LSTM          1.13     0.99     13.31                  15.59   611993.72
+              GRU          3.30     2.45     53.23                  46.64 15805664.18
+            BiGRU          3.47     5.95     65.23                  42.29 15319559.01
 
 RMSE change vs Linear Regression:
   Random Forest         -22.6%
-  LSTM                  -10.1%
-  GRU                   -123.1%
-  BiGRU                 -71.6%
+  LSTM                  -5.2%
+  GRU                   -71.8%
+  BiGRU                 -84.6%
 
 [DONE] Saved to C:\Users\arjun\Desktop\Marine_Project\compare_results_og.txt

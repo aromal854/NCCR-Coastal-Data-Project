@@ -1,0 +1,130 @@
+=================================================================
+NCCR Marine Portal -- Model Comparison (OG Dataset)
+File: OG cleaned.csv
+=================================================================
+
+[DATA] Raw shape: (196973, 15)
+[DATA] Date range: 2019-11-15 00:00:00 to 2025-01-09 15:00:00
+  'Date and Time'                                     object        196973/196973
+  'Wind Speed (m/s)'                                  float64       196973/196973
+  'Wind Dir (Deg)'                                    float64       196973/196973
+  'precipitation'                                     float64       196973/196973
+  'water_temp'                                        float64       196973/196973
+  'ph'                                                float64       196973/196973
+  'turbidity'                                         float64       196973/196973
+  'tds'                                               float64       196973/196973
+  'Chl(ug/l)'                                         float64       196973/196973
+  'tss'                                               float64       196973/196973
+  'BGA (mg/L)'                                        float64       196973/196973
+  'do'                                                float64       196973/196973
+  'salinity'                                          float64       196973/196973
+  'Rel.Hum (%)'                                       float64       196973/196973
+  'air_temp'                                          float64       196973/196973
+
+[PREP] Core WQ features used: ['water_temp', 'ph', 'salinity', 'do', 'Chl(ug/l)']
+[PREP] Daily records: 1883 (2019-11-15 to 2025-01-09)
+[PREP] log1p applied to Chlorophyll
+
+[SPLIT] Train: 1499 | Test: 375
+
+-----------------------------------------------------------------
+MODEL 1/5: Linear Regression (Baseline)
+
+  [Linear Regression]  train_time=0.0s
+  Avg MAE=1.0303  RMSE=2.3405  MAPE=308836.56%  Acc=0.0%
+    water_temp                                MAE=0.2976  RMSE=0.4599  MAPE=1.04%
+    ph                                        MAE=0.0607  RMSE=0.1214  MAPE=0.77%
+    salinity                                  MAE=1.2764  RMSE=2.9297  MAPE=9.19%
+    do                                        MAE=0.5110  RMSE=0.7765  MAPE=15.02%
+    Chl(ug/l)                                 MAE=3.0057  RMSE=7.4151  MAPE=1544156.80%
+
+-----------------------------------------------------------------
+MODEL 2/5: Random Forest (100 trees)
+
+  [Random Forest]  train_time=0.3s
+  Avg MAE=1.5376  RMSE=3.0063  MAPE=2595556.86%  Acc=0.0%
+    water_temp                                MAE=0.4165  RMSE=0.6180  MAPE=1.46%
+    ph                                        MAE=0.0867  RMSE=0.1474  MAPE=1.11%
+    salinity                                  MAE=2.5883  RMSE=4.2126  MAPE=34.50%
+    do                                        MAE=0.8449  RMSE=1.2926  MAPE=33.27%
+    Chl(ug/l)                                 MAE=3.7515  RMSE=8.7609  MAPE=12977713.97%
+
+[DL] epochs_max=300  batch=32  n_feat=5  train_samples=1499
+
+-----------------------------------------------------------------
+MODEL 3/5: LSTM
+  Epochs: 156  val_loss: 0.061289
+
+  [LSTM]  train_time=33.6s
+  Avg MAE=1.0966  RMSE=2.4744  MAPE=166690.90%  Acc=0.0%
+    water_temp                                MAE=0.3204  RMSE=0.4816  MAPE=1.12%
+    ph                                        MAE=0.0767  RMSE=0.1386  MAPE=0.98%
+    salinity                                  MAE=1.4175  RMSE=3.2972  MAPE=11.28%
+    do                                        MAE=0.5505  RMSE=0.7962  MAPE=16.00%
+    Chl(ug/l)                                 MAE=3.1182  RMSE=7.6584  MAPE=833425.13%
+
+-----------------------------------------------------------------
+MODEL 4/5: GRU
+  Epochs: 40  val_loss: 0.079042
+
+  [GRU]  train_time=10.3s
+  Avg MAE=2.5852  RMSE=4.1270  MAPE=3665706.85%  Acc=0.0%
+    water_temp                                MAE=0.9362  RMSE=1.1517  MAPE=3.22%
+    ph                                        MAE=0.1980  RMSE=0.2708  MAPE=2.61%
+    salinity                                  MAE=5.5061  RMSE=6.7779  MAPE=53.39%
+    do                                        MAE=1.3222  RMSE=1.6438  MAPE=46.08%
+    Chl(ug/l)                                 MAE=4.9634  RMSE=10.7908  MAPE=18328428.95%
+
+-----------------------------------------------------------------
+MODEL 5/5: BiGRU
+  Epochs: 40  val_loss: 0.162935
+
+  [BiGRU]  train_time=14.8s
+  Avg MAE=3.5579  RMSE=5.6957  MAPE=3383687.67%  Acc=0.0%
+    water_temp                                MAE=1.0249  RMSE=1.3471  MAPE=3.64%
+    ph                                        MAE=0.4794  RMSE=0.6250  MAPE=6.31%
+    salinity                                  MAE=5.2345  RMSE=8.3720  MAPE=79.05%
+    do                                        MAE=2.9938  RMSE=3.5165  MAPE=88.36%
+    Chl(ug/l)                                 MAE=8.0569  RMSE=14.6177  MAPE=16918260.96%
+
+=================================================================
+FINAL COMPARISON TABLE
+=================================================================
+            Model  Avg_MAE  Avg_RMSE   Avg_MAPE  Accuracy  Train_s
+Linear Regression   1.0303    2.3405  308836.56       0.0      0.0
+    Random Forest   1.5376    3.0063 2595556.86       0.0      0.3
+             LSTM   1.0966    2.4744  166690.90       0.0     33.6
+              GRU   2.5852    4.1270 3665706.85       0.0     10.3
+            BiGRU   3.5579    5.6957 3383687.67       0.0     14.8
+
+Per-parameter MAE:
+            Model  MAE_water_temp  MAE_ph  MAE_salinity  MAE_do  MAE_Chl
+Linear Regression          0.2976  0.0607        1.2764  0.5110   3.0057
+    Random Forest          0.4165  0.0867        2.5883  0.8449   3.7515
+             LSTM          0.3204  0.0767        1.4175  0.5505   3.1182
+              GRU          0.9362  0.1980        5.5061  1.3222   4.9634
+            BiGRU          1.0249  0.4794        5.2345  2.9938   8.0569
+
+Per-parameter RMSE:
+            Model  RMSE_water_temp  RMSE_ph  RMSE_salinity  RMSE_do  RMSE_Chl
+Linear Regression           0.4599   0.1214         2.9297   0.7765    7.4151
+    Random Forest           0.6180   0.1474         4.2126   1.2926    8.7609
+             LSTM           0.4816   0.1386         3.2972   0.7962    7.6584
+              GRU           1.1517   0.2708         6.7779   1.6438   10.7908
+            BiGRU           1.3471   0.6250         8.3720   3.5165   14.6177
+
+Per-parameter MAPE (%):
+            Model  MAPE_water_temp  MAPE_ph  MAPE_salinity  MAPE_do    MAPE_Chl
+Linear Regression             1.04     0.77           9.19    15.02  1544156.80
+    Random Forest             1.46     1.11          34.50    33.27 12977713.97
+             LSTM             1.12     0.98          11.28    16.00   833425.13
+              GRU             3.22     2.61          53.39    46.08 18328428.95
+            BiGRU             3.64     6.31          79.05    88.36 16918260.96
+
+RMSE change vs Linear Regression:
+  Random Forest         -28.4%
+  LSTM                  -5.7%
+  GRU                   -76.3%
+  BiGRU                 -143.4%
+
+[DONE] Saved to C:\Users\arjun\Desktop\Marine_Project\compare_results_og_clean.txt

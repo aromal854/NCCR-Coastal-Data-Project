@@ -1,12 +1,12 @@
 """
 compare_models_og.py  — runs on Chennai_2019-2024(OG).xlsx (5-year full dataset)
-All output written to compare_results_og.txt (UTF-8 safe)
+All output written to compare_results_og_clean.txt (UTF-8 safe)
 """
 import sys, os, io, time, warnings
 warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-OUT = r"C:\Users\arjun\Desktop\Marine_Project\compare_results_og.txt"
+OUT = r"C:\Users\arjun\Desktop\Marine_Project\compare_results_og_clean.txt"
 _f  = open(OUT, "w", encoding="utf-8")
 def p(*a): _f.write(" ".join(str(x) for x in a) + "\n"); _f.flush()
 
@@ -18,57 +18,33 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # ── 1. LOAD ───────────────────────────────────────────────────────────────────
-DATA = r"C:\Users\arjun\Desktop\Marine_Project\Chennai_2019-2024(OG).xlsx"
+DATA = r"C:\Users\arjun\Desktop\Marine_Project\OG cleaned.csv"
 p("=" * 65)
 p("NCCR Marine Portal -- Model Comparison (OG Dataset)")
-p(f"File: Chennai_2019-2024(OG).xlsx")
+p(f"File: OG cleaned.csv")
 p("=" * 65)
 
-df = pd.read_excel(DATA)
+df = pd.read_csv(DATA)
 p(f"\n[DATA] Raw shape: {df.shape}")
 p(f"[DATA] Date range: {df.iloc[0,0]} to {df.iloc[-1,0]}")
 for c in df.columns:
     p(f"  {str(c)!r:50s}  {str(df[c].dtype):12s}  {df[c].notna().sum()}/{len(df)}")
 
 # ── 2. NCCR PIPELINE ──────────────────────────────────────────────────────────
-# Replace text flags
-df = df.replace(['BTL','BDL','btl','bdl','<1','-'], np.nan)
 
 # Date index
 date_col = 'Date and Time'
-df[date_col] = pd.to_datetime(df[date_col], dayfirst=True, errors='coerce')
+df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
 df = df.dropna(subset=[date_col]).set_index(date_col).sort_index()
 
-# Numeric coercion
-for c in df.columns:
-    df[c] = pd.to_numeric(df[c], errors='coerce')
-
-# Physics quarantine
-if 'pH' in df.columns:
-    df.loc[(df['pH'] < 6) | (df['pH'] > 10), 'pH'] = np.nan
-
-wq_temp = 'WQ Temp (°C)'
-if wq_temp in df.columns:
-    df.loc[df[wq_temp] > 40, wq_temp] = np.nan
-
-sal = 'Sal (psu)'
-if sal in df.columns:
-    df.loc[df[sal] < 0.5, sal] = np.nan
-
-do_c = 'Dissolved Oxygen (mg/L)'
-if do_c in df.columns:
-    df.loc[df[do_c] < 0, do_c] = np.nan
-
+wq_temp = 'water_temp'
+sal = 'salinity'
+do_c = 'do'
+ph = 'ph'
 chl = 'Chl(ug/l)'
 
-# Drop dead-sensor columns (all zero)
-for c in list(df.columns):
-    if df[c].notna().sum() > 0 and (df[c].dropna() == 0).all():
-        p(f"[PREP] Dropped dead sensor: {c!r}")
-        df.drop(columns=[c], inplace=True)
-
 # Core WQ features only (keeps model focused on oceanographic params)
-CORE_FEATS = [wq_temp, 'pH', sal, do_c, chl]
+CORE_FEATS = [wq_temp, ph, sal, do_c, chl]
 FEATURES   = [f for f in CORE_FEATS if f in df.columns]
 p(f"\n[PREP] Core WQ features used: {FEATURES}")
 
@@ -81,7 +57,7 @@ for d in [1,2,3,4]:
     daily = daily.fillna(daily.shift(periods=d, freq='D'))
 for c in daily.columns:
     if daily[c].isnull().any():
-        sm = daily.groupby([daily.index.month, daily.index.hour])[c].transform('mean')
+        sm = daily.groupby([daily.index.month])[c].transform('mean')
         daily[c] = daily[c].fillna(sm)
 daily = daily.ffill().bfill().dropna()
 
