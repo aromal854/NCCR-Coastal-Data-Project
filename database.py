@@ -177,9 +177,22 @@ def save_bulk_data(data_list):
 def fetch_all_data():
     try:
         if supabase:
-            # Fetch up to 100,000 rows (default is 100)
-            response = supabase.table("marine_data").select("*").range(0, 99999).execute()
-            df = pd.DataFrame(response.data)
+            all_data = []
+            page_size = 1000
+            start = 0
+            
+            while True:
+                response = supabase.table("marine_data").select("*").range(start, start + page_size - 1).execute()
+                data = response.data
+                if not data:
+                    break
+                all_data.extend(data)
+                
+                if len(data) < page_size:
+                    break
+                start += page_size
+
+            df = pd.DataFrame(all_data)
             
             if not df.empty:
                 # REVERSE MAPPING (Database lowercase -> Dashboard TitleCase)

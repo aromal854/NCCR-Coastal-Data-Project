@@ -123,7 +123,7 @@ def show(request_id_from_app=None):
                 df_clean.to_csv(PENDING_CSV, index=False)
                 
                 st.balloons()
-                st.success(f"✅ {len(data_list)} Records Verified and Approved! Thank you for your contribution.")
+                st.success(f"✅ {len(clean_data_list)} Records Verified and Approved! Thank you for your contribution.")
                 st.stop()
             else:
                 st.error(f"❌ Error saving to database: {msg}")

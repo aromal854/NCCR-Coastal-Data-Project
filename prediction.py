@@ -164,19 +164,33 @@ def clean_marine_data(df) -> "tuple[pd.DataFrame, dict, dict, str] | tuple[None,
     # Physics quarantine
     if 'water_temp' in mapping:
         c = mapping['water_temp']
-        df.loc[df[c] > 40, c] = np.nan
+        # Bay of Bengal water temp rarely drops below 20C. A reading of 0 is a dead sensor.
+        df.loc[(df[c] <= 0) | (df[c] > 40), c] = np.nan
+    if 'air_temp' in mapping:
+        c = mapping['air_temp']
+        df.loc[(df[c] <= 0) | (df[c] > 55), c] = np.nan
     if 'ph' in mapping:
         c = mapping['ph']
         df.loc[(df[c] < 6) | (df[c] > 10), c] = np.nan
     if 'turbidity' in mapping:
         c = mapping['turbidity']
-        df.loc[df[c] < 0, c] = np.nan
+        df.loc[df[c] <= 0, c] = np.nan
     if 'salinity' in mapping:
         c = mapping['salinity']
         df.loc[df[c] < 0.5, c] = np.nan
     if 'do' in mapping:
         c = mapping['do']
-        df.loc[df[c] < 0, c] = np.nan
+        # DO of exactly 0.0 is typically a sensor calibration error/failure in open coastal waters
+        df.loc[df[c] <= 0, c] = np.nan
+    if 'tds' in mapping:
+        c = mapping['tds']
+        df.loc[df[c] <= 0, c] = np.nan
+    if 'tss' in mapping:
+        c = mapping['tss']
+        df.loc[df[c] <= 0, c] = np.nan
+    if 'Chl(ug/l)' in mapping:
+        c = mapping['Chl(ug/l)']
+        df.loc[df[c] <= 0, c] = np.nan
 
     # Temporal interpolation
     remaining_gaps_cols = []

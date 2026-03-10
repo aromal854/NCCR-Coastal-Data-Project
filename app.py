@@ -40,7 +40,10 @@ def apply_nccr_branding():
         /* ── 1. TYPOGRAPHY ─────────────────────────────────── */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-        *, *::before, *::after {
+        /* Exclude material icon classes from the global font override to avoid text overlaps in dataframes */
+        *:not(i):not([class*="material"]):not([data-testid="stIconMaterial"])::before, 
+        *:not(i):not([class*="material"]):not([data-testid="stIconMaterial"])::after,
+        *:not(i):not([class*="material"]):not([data-testid="stIconMaterial"]) {
             font-family: 'Inter', sans-serif !important;
         }
 
