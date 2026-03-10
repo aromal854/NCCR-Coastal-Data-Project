@@ -1,0 +1,32 @@
+Working of Bi-GRU model
+
+When the training script asks you about the "7 days", it is asking about the Input Window (or "Lookback Window"), not the total size of the database.
+
+Here is exactly how it works:
+
+1. Training (Happens in 
+
+prediction.py
+ / when clicking the Retrain button)
+During training, the neural network learns by looking at the entire 6-month historical dataset in thousands of sliding 7-day chunks. Imagine taking a "magnifying glass" that covers exactly 7 days.
+
+The neural network places the magnifying glass at the very beginning of your 6-month CSV (Days 1–7). It looks at those 7 days, and tries to predict Days 8–10.
+Then it slides the magnifying glass forward by 6 hours. Now it looks at Days 1.25–7.25, and tries to predict the next 3 days.
+It slides forward again and again, thousands of times, until it reaches the end of the 6-month file.
+It uses 85% of those thousands of snapshots to learn the patterns, and holds back the final 15% of the snapshots to strictly test itself (validation).
+2. Inference / Predicting the Future (Happens on the Dashboard)
+Once the model has learned the patterns from 6 months of sliding snapshots, it only needs the most recent 7 days of live data to generate a brand new forecast.
+
+So, when the Dashboard syncs via FTP:
+
+It grabs the Server Room dataset.
+It slices off only the final 7 days from that CSV (which equals 28 6-hour slots).
+It hands those 7 days to the fully-trained BiGRU.
+The BiGRU says: "Ah, I remember studying thousands of 7-day patterns looking just like this during training! Based on my entire life experience, here is what the next 3 days will look like."
+Summary: The "7 days" is just the size of the chunk it needs to read at any given moment to make a prediction. But to become smart, it trained on all 6 months of data chopped into thousands of overlapping 7-day chunks!
+
+
+
+
+
+run_local_server.py

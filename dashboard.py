@@ -1,6 +1,8 @@
 # dashboard.py
 import streamlit as st
 import pandas as pd
+import ftplib
+import os
 import numpy as np
 from datetime import date, datetime, timedelta
 import database as db
@@ -106,16 +108,80 @@ def main_app():
         )
         st.markdown("<hr style='margin:12px 0 20px 0;'>", unsafe_allow_html=True)
 
+        st.divider()
+        st.subheader("📡 Live RTMS Buoy Data Sync")
+
+        if st.button("🔄 Fetch Latest Data from NCCR Server", type="primary"):
+            with st.spinner("Establishing secure FTP connection and downloading data..."):
+                try:
+                    # Connect to Local Fake Server
+                    ftp = ftplib.FTP()
+                    ftp.connect("127.0.0.1", 2121)
+                    ftp.login("nccr_admin", "password123")
+                    
+                    # Download the file
+                    filename = "buoy_data.csv"
+                    save_path = os.path.join(os.getcwd(), filename) 
+                    
+                    with open(save_path, "wb") as file:
+                        ftp.retrbinary(f"RETR {filename}", file.write)
+                    ftp.quit()
+                    
+                    st.success("✅ Secure FTP Transfer Complete!")
+                    st.toast("Live data synchronized successfully!", icon="🌊")
+                    
+                    # Instantly refresh the app so the existing UI loads the new CSV
+                    st.rerun()
+                    
+                except Exception as e:
+                    st.error(f"FTP Connection Failed: {e}")
+
+        # ── Load Live FTP Data ─────────────────────────────────────
+        live_df = pd.DataFrame()
+        latest_row = {}
+        buoy_file = os.path.join(os.getcwd(), "buoy_data.csv")
+        if os.path.exists(buoy_file):
+            try:
+                live_df = pd.read_csv(buoy_file)
+                # Ensure datetime format for charting
+                if 'Date' in live_df.columns:
+                    live_df['Date'] = pd.to_datetime(live_df['Date'], errors='coerce')
+                    live_df = live_df.dropna(subset=['Date'])
+                    live_df = live_df.sort_values(by='Date').tail(30) # Last 30 readings
+                
+                if not live_df.empty:
+                    latest_row = live_df.iloc[-1].to_dict()
+            except Exception as e:
+                st.error(f"Error reading live data: {e}")
+
+        # Safe fetch helper
+        def get_val(key_hints, default="N/A", df_row=latest_row, exact=False):
+            if not df_row: return default
+            if isinstance(key_hints, str):
+                key_hints = [key_hints]
+            for hint in key_hints:
+                lower_hint = hint.lower()
+                for col in df_row.keys():
+                    if exact:
+                        match = lower_hint == col.lower()
+                    else:
+                        match = lower_hint == col.lower() or lower_hint in col.lower()
+                    if match:
+                        val = df_row[col]
+                        if not pd.isna(val):
+                            return f"{float(val):.1f}" if pd.api.types.is_numeric_dtype(type(val)) or (isinstance(val, str) and val.replace('.','',1).isdigit()) else str(val)
+            return default
+
         # ── 4 KPI Metric Cards ────────────────────────────────────
         c1, c2, c3, c4 = st.columns(4)
         with c1:
-            st.metric("🌡️ Water Temperature", "28.4 °C", "▲ +0.6  Elevated", delta_color="inverse")
+            st.metric("🌡️ Water Temperature", f"{get_val(['Temp', 'Water_Temp'])} °C", "Live Data", delta_color="off")
         with c2:
-            st.metric("⚗️ pH Level", "7.8", "Normal Range", delta_color="off")
+            st.metric("⚗️ pH Level", f"{get_val(['pH'], exact=True)}", "Live Data", delta_color="off") # Note pH isn't in dataaaaaaaa6, will fall back cleanly
         with c3:
-            st.metric("💧 Dissolved Oxygen", "6.2 mg/L", "▼ −0.4  Low", delta_color="inverse")
+            st.metric("💧 Dissolved Oxygen", f"{get_val(['ODO', 'DO', 'Dissolved_Oxygen'])} mg/L", "Live Data", delta_color="off")
         with c4:
-            st.metric("🌫️ Turbidity", "12 NTU", "▲ +2.1  Elevated", delta_color="inverse")
+            st.metric("🌫️ Turbidity", f"{get_val(['Turb', 'Turbididty'])} NTU", "Live Data", delta_color="off")
 
         st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
@@ -123,13 +189,19 @@ def main_app():
         chart_col, alert_col = st.columns([3, 1], gap="large")
 
         with chart_col:
-            st.markdown('<p class="nccr-section-label">Water Quality Trends — Last 30 Days</p>', unsafe_allow_html=True)
+            st.markdown('<p class="nccr-section-label">Water Quality Trends — Live Data Feed</p>', unsafe_allow_html=True)
 
-            dates_30 = pd.date_range(end=datetime.now(), periods=30, freq="D")
-            np.random.seed(42)
-            do_vals  = np.clip(np.random.randn(30) * 0.5 + 6.4, 4.0, 9.0)
-            ph_vals  = np.clip(np.random.randn(30) * 0.15 + 7.8, 6.5, 9.0)
-            turb_vals = np.clip(np.random.randn(30) * 2 + 11.5, 0, 30)
+            if not live_df.empty:
+                dates_30 = live_df['Timestamp'] if 'Timestamp' in live_df.columns else (live_df['Date'] if 'Date' in live_df.columns else pd.date_range(end=datetime.now(), periods=len(live_df), freq="H"))
+                do_col = next((c for c in live_df.columns if 'odo' in c.lower() or ('do' in c.lower() and 'doy' not in c.lower())), None)
+                ph_col = next((c for c in live_df.columns if 'ph' in c.lower() and 'chlorophyll' not in c.lower()), None)
+                turb_col = next((c for c in live_df.columns if 'turb' in c.lower()), None)
+
+                do_vals = live_df[do_col] if do_col else []
+                ph_vals = live_df[ph_col] if ph_col else []
+                turb_vals = live_df[turb_col] if turb_col else []
+            else:
+                dates_30, do_vals, ph_vals, turb_vals = [], [], [], []
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(
@@ -167,65 +239,173 @@ def main_app():
 
         with alert_col:
             st.markdown('<p class="nccr-section-label">Environmental Alerts</p>', unsafe_allow_html=True)
-            st.markdown("""
-            <div class="nccr-alert-critical">
-                <p class="nccr-alert-title">🔴 CRITICAL — Algal Bloom Risk</p>
-                <p class="nccr-alert-body">High probability near Ennore Estuary. Chlorophyll: 24.6 µg/L</p>
-            </div>
-            <div class="nccr-alert-warning">
-                <p class="nccr-alert-title">🟡 WARNING — Elevated Turbidity</p>
-                <p class="nccr-alert-body">Post-monsoon runoff in South Sector. Turbidity: 18 NTU</p>
-            </div>
-            <div class="nccr-alert-warning">
-                <p class="nccr-alert-title">🟡 WARNING — Low Dissolved O₂</p>
-                <p class="nccr-alert-body">Station S-03 Kochi: DO at 4.8 mg/L (threshold: 5.0)</p>
-            </div>
-            <div class="nccr-alert-info">
-                <p class="nccr-alert-title">🔵 INFO — Calibration Scheduled</p>
-                <p class="nccr-alert-body">Remote sensing satellite at 02:00 hrs</p>
-            </div>
-            <div class="nccr-alert-ok">
-                <p class="nccr-alert-title">🟢 STABLE — Gulf of Mannar</p>
-                <p class="nccr-alert-body">pH normalised. All parameters within safe range</p>
-            </div>
-            """, unsafe_allow_html=True)
+            
+            alerts_html = ""
+            if not live_df.empty:
+                last_row = live_df.iloc[-1]
+                
+                # Check Turbidity
+                turb_col = next((c for c in live_df.columns if 'turb' in c.lower()), None)
+                if turb_col and not pd.isna(last_row[turb_col]):
+                    t_val = float(last_row[turb_col])
+                    if t_val > 50:
+                        alerts_html += f"""<div class="nccr-alert-critical"><p class="nccr-alert-title">🔴 CRITICAL — Extreme Turbidity</p><p class="nccr-alert-body">Runoff Event Detected. Turbidity: {t_val:.1f} NTU</p></div>"""
+                    elif t_val > 15:
+                        alerts_html += f"""<div class="nccr-alert-warning"><p class="nccr-alert-title">🟡 WARNING — Elevated Turbidity</p><p class="nccr-alert-body">Turbidity rising: {t_val:.1f} NTU</p></div>"""
+
+                # Check DO
+                do_col = next((c for c in live_df.columns if 'odo' in c.lower() or 'do' in c.lower() and 'doy' not in c.lower()), None)
+                if do_col and not pd.isna(last_row[do_col]):
+                    do_val = float(last_row[do_col])
+                    if do_val < 3.0:
+                        alerts_html += f"""<div class="nccr-alert-critical"><p class="nccr-alert-title">🔴 CRITICAL — Hypoxia Alert</p><p class="nccr-alert-body">Danger to marine life. DO at {do_val:.1f} mg/L</p></div>"""
+                    elif do_val < 5.0:
+                        alerts_html += f"""<div class="nccr-alert-warning"><p class="nccr-alert-title">🟡 WARNING — Low Dissolved O₂</p><p class="nccr-alert-body">DO dropping: {do_val:.1f} mg/L (threshold: 5.0)</p></div>"""
+                
+                # Check Chl
+                chl_keys = [k for k in live_df.columns if 'chl' in k.lower() or 'chlorophyll' in k.lower()]
+                if chl_keys and not pd.isna(last_row[chl_keys[0]]):
+                    chl_val = float(last_row[chl_keys[0]])
+                    if chl_val > 20.0:
+                        alerts_html += f"""<div class="nccr-alert-critical"><p class="nccr-alert-title">🔴 CRITICAL — Algal Bloom Risk</p><p class="nccr-alert-body">High probability. Chlorophyll: {chl_val:.1f} µg/L</p></div>"""
+                    elif chl_val > 10.0:
+                        alerts_html += f"""<div class="nccr-alert-warning"><p class="nccr-alert-title">🟡 WARNING — Elevated Chlorophyll</p><p class="nccr-alert-body">Potential bloom forming. Chlorophyll: {chl_val:.1f} µg/L</p></div>"""
+
+                # If no active alerts from live data, show a default stable state
+                if not alerts_html:
+                    alerts_html = """<div class="nccr-alert-ok"><p class="nccr-alert-title">🟢 STABLE — All Parameters Normal</p><p class="nccr-alert-body">Water quality indices are within expected ecological bounds.</p></div>"""
+                
+                # Append standard scheduled info (since this is usually a systemic alert)
+                alerts_html += """<div class="nccr-alert-info"><p class="nccr-alert-title">🔵 INFO — System Sync</p><p class="nccr-alert-body">Latest data synced from central FTP server.</p></div>"""
+            else:
+                alerts_html = """<div class="nccr-alert-info"><p class="nccr-alert-title">⚪ OFFLINE — No Data</p><p class="nccr-alert-body">Awaiting connection to FTP buoy network.</p></div>"""
+
+            st.markdown(alerts_html, unsafe_allow_html=True)
 
         # ── BiGRU 3-Day Forecast Summary ──────────────────────────
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         st.markdown('<p class="nccr-section-label">3-Day Water Quality Forecast (6-Hour Resolution, 12 Windows) — Powered by Bidirectional GRU Neural Network</p>', unsafe_allow_html=True)
 
         today = date.today()
-        # Generate 12 six-hour slots across 3 days
-        from datetime import datetime as _dt
-        base_dt = _dt.combine(today, _dt.min.time())
-        slot_temps = [28.9, 29.1, 29.3, 28.8, 29.0, 29.2, 29.4, 28.9, 28.7, 29.0, 28.8, 28.6]
-        slot_ph    = [7.7, 7.8, 7.9, 7.7, 7.8, 7.9, 8.0, 7.8, 7.9, 8.0, 7.9, 7.8]
-        slot_do    = [6.0, 5.8, 5.5, 6.2, 5.9, 5.7, 5.4, 6.1, 6.3, 6.1, 6.2, 6.4]
-        slot_sal   = [32.1, 32.2, 32.3, 32.0, 32.3, 32.4, 32.5, 32.2, 32.2, 32.3, 32.1, 32.0]
-        slot_turb  = [13.4, 12.8, 12.1, 13.0, 12.5, 11.9, 11.2, 12.0, 10.5, 10.8, 10.2, 9.9]
         forecast_rows = []
-        for s in range(12):
-            slot_dt = base_dt + timedelta(hours=6 * (s + 1))
-            day_num = s // 4 + 1
-            forecast_rows.append({
-                "Window": f"Day {day_num} — {slot_dt.strftime('%d %b %H:%M')}",
-                "Water Temp (°C)": f"{slot_temps[s]}",
-                "pH": f"{slot_ph[s]}",
-                "DO (mg/L)": f"{slot_do[s]}",
-                "Salinity (psu)": f"{slot_sal[s]}",
-                "Turbidity (NTU)": f"{slot_turb[s]}",
-            })
-        rows_html = "".join(
-            f"""<tr>
-                <td class="day-label">{r['Window']}</td>
-                <td>{r['Water Temp (°C)']}</td>
-                <td>{r['pH']}</td>
-                <td>{r['DO (mg/L)']}</td>
-                <td>{r['Salinity (psu)']}</td>
-                <td>{r['Turbidity (NTU)']}</td>
-            </tr>"""
-            for r in forecast_rows
-        )
+        forecast_error = None
+
+        try:
+            import tensorflow as tf
+            from sklearn.preprocessing import MinMaxScaler
+            from prediction import FEATURES, RESAMP_FREQ, _smart_6h_aggregate, LOOKBACK
+
+            MODEL_PATH = os.path.join(os.getcwd(), "water_quality_bigru.h5")
+            
+            if not os.path.exists(MODEL_PATH):
+                forecast_error = "BiGRU Model missing. Please train it via the ML Prediction tab first."
+            elif live_df.empty:
+                forecast_error = "No live data available to seed the forecast."
+            else:
+                full_df = pd.read_csv(buoy_file) # Re-read full for deep lookback
+                d_col = next((c for c in full_df.columns if "date" in c.lower() or "time" in c.lower()), None)
+                
+                if not d_col:
+                    forecast_error = "Could not find Timestamp column for sequential forecasting."
+                else:
+                    full_df[d_col] = pd.to_datetime(full_df[d_col], errors='coerce')
+                    full_df = full_df.dropna(subset=[d_col]).set_index(d_col).sort_index()
+
+                    f_map = {}
+                    for c in full_df.columns:
+                        cl = c.lower()
+                        if "temp" in cl and ("water" in cl or cl == 'temp'): f_map['water_temp'] = c
+                        elif "sal" in cl: f_map['salinity'] = c
+                        elif "turb" in cl: f_map['turbidity'] = c
+                        elif "chl" in cl or "chlorophyll" in cl: f_map['Chl(ug/l)'] = c
+                        elif cl == "ph" or "p.h." == cl or "ph level" in cl:
+                            if "chlorophyll" not in cl: f_map['ph'] = c
+                        elif "do" == cl or ("odo" in cl) or ("oxygen" in cl): f_map['do'] = c
+
+                    renamed_df = full_df.rename(columns={v: k for k, v in f_map.items()})
+                    avail_feats = [f for f in FEATURES if f in renamed_df.columns]
+
+                    if len(avail_feats) < 2:
+                        forecast_error = "Not enough supported features to run BiGRU inference."
+                    else:
+                        for f in avail_feats:
+                            renamed_df[f] = pd.to_numeric(renamed_df[f], errors='coerce')
+                            
+                        # Pad missing features to match the model's required shape without error
+                        for f in FEATURES:
+                            if f not in renamed_df.columns:
+                                renamed_df[f] = 0.0
+
+                        resampled = renamed_df[FEATURES].resample(RESAMP_FREQ).apply(_smart_6h_aggregate).ffill().bfill().fillna(0.0)
+                        
+                        if len(resampled) < LOOKBACK:
+                            forecast_error = f"Requires {LOOKBACK} historical slots for forecasting. Found {len(resampled)}."
+                        else:
+                            scaler = MinMaxScaler()
+                            scaler.fit(resampled.values)
+                            
+                            recent = resampled.iloc[-LOOKBACK:]
+                            X_raw = recent.values
+                            X_input = scaler.transform(X_raw)[np.newaxis, ...]
+
+                            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+                            tf.get_logger().setLevel('ERROR')
+                            model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+                            
+                            model_n_feat = model.input_shape[-1]
+                            if len(FEATURES) != model_n_feat:
+                                forecast_error = f"Model configuration shift! Model needs {model_n_feat} features, but internal config has {len(FEATURES)}. Please retrain the BiGRU model!"
+                            else:
+                                raw_pred = model.predict(X_input, verbose=0)
+                                if raw_pred.ndim == 2:
+                                    forecast_steps = raw_pred.shape[1] // len(FEATURES)
+                                    raw_pred = raw_pred.reshape(1, forecast_steps, len(FEATURES))
+                                else:
+                                    forecast_steps = raw_pred.shape[1]
+
+                                y_pred = scaler.inverse_transform(raw_pred[0])
+                                base_dt = recent.index[-1]
+
+                                def safe_format(val):
+                                    try: return "N/A" if pd.isna(val) else f"{float(val):.2f}"
+                                    except: return "N/A"
+
+                                for s in range(forecast_steps):
+                                    slot_dt = base_dt + timedelta(hours=6 * (s + 1))
+                                    day_num = s // 4 + 1
+                                    r_data = {
+                                        "Window": f"Day {day_num} — {slot_dt.strftime('%d %b %H:%M')}",
+                                        "Water Temp (°C)": "N/A", "pH": "N/A", "DO (mg/L)": "N/A",
+                                        "Salinity (psu)": "N/A", "Turbidity (NTU)": "N/A"
+                                    }
+                                    for idx, fn in enumerate(FEATURES):
+                                        if fn in avail_feats: # Use avail_feats logic to only display columns that exist in live data
+                                            val = safe_format(y_pred[s, idx])
+                                            if fn == 'water_temp': r_data["Water Temp (°C)"] = val
+                                            elif fn == 'ph': r_data["pH"] = val
+                                            elif fn == 'do': r_data["DO (mg/L)"] = val
+                                            elif fn == 'salinity': r_data["Salinity (psu)"] = val
+                                            elif fn == 'turbidity': r_data["Turbidity (NTU)"] = val
+                                    forecast_rows.append(r_data)
+        except Exception as e:
+            forecast_error = f"Inference Engine Offline: {e}"
+
+        if forecast_error:
+            rows_html = f"<tr><td colspan='6' style='text-align:center; padding: 20px; color:#c0392b;'><b>{forecast_error}</b></td></tr>"
+        elif not forecast_rows:
+            rows_html = "<tr><td colspan='6' style='text-align:center; padding: 20px;'>No forecast generated.</td></tr>"
+        else:
+            rows_html = "".join(
+                f'''<tr>
+                    <td class="day-label">{r['Window']}</td>
+                    <td>{r['Water Temp (°C)']}</td>
+                    <td>{r['pH']}</td>
+                    <td>{r['DO (mg/L)']}</td>
+                    <td>{r['Salinity (psu)']}</td>
+                    <td>{r['Turbidity (NTU)']}</td>
+                </tr>'''
+                for r in forecast_rows
+            )
         st.markdown(f"""
         <table class="nccr-forecast-table">
             <thead>
