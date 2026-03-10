@@ -12,7 +12,7 @@ import os
 # ---------------------------------------------------------------------------
 
 # Canonical BiGRU feature order (must match model training in model_prep.py)
-FEATURES = ['water_temp', 'ph', 'do', 'salinity', 'Chl(ug/l)']
+FEATURES = ['water_temp', 'ph', 'do', 'salinity'] # 'Chl(ug/l)' temporarily disabled
 FEATURE_LABELS = {
     'water_temp':  '🌡️ Water Temp (°C)',
     'ph':          '⚗️ pH',
@@ -278,8 +278,28 @@ def load_data():
                 st.write("🟢 **Clean (Untouched)**")
                 for c in (report['untouched'] or ["_None_"]):
                     st.write(f"- {c}")
-        st.write("### 📉 Post-Cleaning Statistics")
-        # Convert any datetime columns to string to avoid PyArrow serialization errors
+        st.write("### 📊 Dataset Statistics")
+        col_pre, col_post = st.columns(2)
+
+        # Prepare Pre-Cleaning Stats
+        rename_map = {v: k for k, v in mapping.items()}
+        raw_df_renamed = raw_df.rename(columns=rename_map)
+        safe_raw_df = raw_df_renamed.copy()
+        for col in safe_raw_df.columns:
+            if pd.api.types.is_datetime64_any_dtype(safe_raw_df[col]):
+                safe_raw_df[col] = safe_raw_df[col].astype(str)
+            elif safe_raw_df[col].dtype == object:
+                try:
+                    safe_raw_df[col] = safe_raw_df[col].apply(
+                        lambda x: str(x) if hasattr(x, 'year') else x)
+                except Exception:
+                    pass
+
+        with col_pre:
+            st.markdown("#### 🟥 Pre-Cleaning (Raw)")
+            st.dataframe(safe_raw_df.describe(), width='stretch')
+
+        # Prepare Post-Cleaning Stats
         safe_df = cleaned_df.copy()
         for col in safe_df.columns:
             if pd.api.types.is_datetime64_any_dtype(safe_df[col]):
@@ -290,7 +310,10 @@ def load_data():
                         lambda x: str(x) if hasattr(x, 'year') else x)
                 except Exception:
                     pass
-        st.dataframe(safe_df.describe(), width='stretch')
+        
+        with col_post:
+            st.markdown("#### 🟩 Post-Cleaning")
+            st.dataframe(safe_df.describe(), width='stretch')
 
         return cleaned_df, date_col_name
 
@@ -737,10 +760,21 @@ print('Model saved.')
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     # ── Forecast vs Actual Chart ─────────────────────────────────────────────
-    # Pick the feature with the highest MAE (most interesting to show)
-    primary_feat = max(mae_values, key=mae_values.get)
+    # Create dropdown for parameter selection
+    dropdown_options = {FEATURE_LABELS.get(f, f): f for f in avail_feats}
+    default_feat = max(mae_values, key=mae_values.get)
+    default_label = FEATURE_LABELS.get(default_feat, default_feat)
+    
+    st.markdown("#### 📈 Forecast Visualization")
+    selected_label = st.selectbox(
+        "Select Parameter to Visualize:",
+        options=list(dropdown_options.keys()),
+        index=list(dropdown_options.keys()).index(default_label)
+    )
+    
+    primary_feat = dropdown_options[selected_label]
     primary_idx  = avail_feats.index(primary_feat)
-    label_str    = FEATURE_LABELS.get(primary_feat, primary_feat)
+    label_str    = selected_label
 
     # Build 6-hour slot labels for x-axis
     # daily_df is now a 6h-resampled DataFrame; index[-1] is the last known 6h slot

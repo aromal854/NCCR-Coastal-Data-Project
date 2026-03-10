@@ -25,6 +25,14 @@ def send_verification_email(to_email, prof_name, request_id, user_name):
     img_path = r"pages\__pycache__\emblem.jpg" 
     
     # 3. Create the HTML Body
+    import sys
+    if sys.platform != "win32":
+        # Assume production streamlit cloud (Linux)
+        BASE_URL = "https://nccr-coastal-data-project-vcfp6ym9hfkvmzvydnqe3u.streamlit.app"
+    else:
+        # Local testing (Windows)
+        BASE_URL = "http://localhost:8501"
+
     # We use cid:header_image to reference the attached image inside the HTML
     html_content = f"""
     <html>
@@ -41,7 +49,7 @@ def send_verification_email(to_email, prof_name, request_id, user_name):
         <p>You may please suggest any other expert(s), in case you preoccupied/unavailable to verify the data.</p>
         
         <p>
-            <a href="http://localhost:8501/?page=verify&id={request_id}" 
+            <a href="{BASE_URL}/?page=verify&id={request_id}" 
                style="background-color: #008CBA; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
                Click Here to Verify Data
             </a>
