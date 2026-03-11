@@ -540,7 +540,7 @@ def _run_lstm_section(cleaned_df, date_col_name):
         return
 
     # ── Load model ──────────────────────────────────────────────────────────
-    MODEL_PATH = os.path.join(os.path.dirname(__file__), "water_quality_lstm.h5")
+    MODEL_PATH = os.path.join(os.getcwd(), "water_quality_lstm.h5")
 
     model_col, _ = st.columns([3, 1])
     with model_col:
