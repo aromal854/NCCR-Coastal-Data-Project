@@ -27,5 +27,11 @@ __pycache__/
 *.db
 *.sqlite3
 
+# Exceptions for required deployment dependencies
+!water_quality_lstm.h5
+!water_quality_lstm.keras
+!buoy_data.csv
+!nccr_data.csv
+
 # Streamlit
 .streamlit/secrets.toml
