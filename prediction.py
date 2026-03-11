@@ -540,7 +540,16 @@ def _run_lstm_section(cleaned_df, date_col_name):
         return
 
     # ── Load model ──────────────────────────────────────────────────────────
-    MODEL_PATH = os.path.join(os.getcwd(), "water_quality_lstm.h5")
+    import os
+    _base_dir = os.path.dirname(os.path.abspath(__file__))
+    if _base_dir.endswith("__pycache__"):
+        _base_dir = os.path.dirname(_base_dir)
+    
+    MODEL_PATH = os.path.join(_base_dir, "water_quality_lstm.h5")
+    
+    # Fallback to current working directory just in case it was launched from project root but __file__ is weird
+    if not os.path.exists(MODEL_PATH):
+        MODEL_PATH = os.path.join(os.getcwd(), "water_quality_lstm.h5")
 
     model_col, _ = st.columns([3, 1])
     with model_col:

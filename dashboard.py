@@ -295,7 +295,14 @@ def main_app():
             from sklearn.preprocessing import MinMaxScaler
             from prediction import FEATURES, RESAMP_FREQ, _smart_6h_aggregate, LOOKBACK
 
-            MODEL_PATH = os.path.join(os.getcwd(), "water_quality_lstm.h5")
+            import os
+            _base_dir = os.path.dirname(os.path.abspath(__file__))
+            if _base_dir.endswith("__pycache__"):
+                _base_dir = os.path.dirname(_base_dir)
+            
+            MODEL_PATH = os.path.join(_base_dir, "water_quality_lstm.h5")
+            if not os.path.exists(MODEL_PATH):
+                MODEL_PATH = os.path.join(os.getcwd(), "water_quality_lstm.h5")
             
             if not os.path.exists(MODEL_PATH):
                 forecast_error = "LSTM Model missing. Please train it via the ML Prediction tab first."
