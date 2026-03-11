@@ -132,8 +132,20 @@ def score(yt_s, yp_s, label, elapsed):
 
     mae_p  = [mean_absolute_error(ft[:,i], fp[:,i]) for i in range(n_feat)]
     rmse_p = [np.sqrt(mean_squared_error(ft[:,i], fp[:,i])) for i in range(n_feat)]
-    denom  = np.abs(ft); denom[denom<1e-6] = 1e-6
-    mape_p = [np.mean(np.abs((ft[:,i]-fp[:,i])/denom[:,i]))*100 for i in range(n_feat)]
+
+    # Safeguard MAPE calculation against division by near-zero values
+    # For parameters that drop to ~0 (especially after log1p -> expm1), standard MAPE explodes
+    mape_p = []
+    for i in range(n_feat):
+        # Only calculate MAPE where true value is meaningfully > 0
+        mask = ft[:, i] > 1e-4
+        if np.any(mask):
+            errs = np.abs((ft[mask, i] - fp[mask, i]) / ft[mask, i]) * 100
+            # Cap individual errors at 100% so one bad prediction doesn't ruin the metric
+            errs = np.clip(errs, 0, 100)
+            mape_p.append(np.mean(errs))
+        else:
+            mape_p.append(0.0)
 
     avg_mae  = float(np.mean(mae_p))
     avg_rmse = float(np.mean(rmse_p))

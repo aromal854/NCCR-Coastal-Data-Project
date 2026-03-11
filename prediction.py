@@ -177,7 +177,7 @@ def clean_marine_data(df) -> "tuple[pd.DataFrame, dict, dict, str] | tuple[None,
         df.loc[df[c] <= 0, c] = np.nan
     if 'salinity' in mapping:
         c = mapping['salinity']
-        df.loc[df[c] < 0.5, c] = np.nan
+        df.loc[df[c] < 25, c] = np.nan
     if 'do' in mapping:
         c = mapping['do']
         # DO of exactly 0.0 is typically a sensor calibration error/failure in open coastal waters
@@ -451,16 +451,13 @@ def _train_and_save_model(resampled_df, avail_feats, model_path,
     X = np.array(X)   # (samples, LOOKBACK=28, n_feat)
     y = np.array(y)   # (samples, FORECAST=12, n_feat)
 
-    # Build BiGRU architecture (with Dropout for regularisation)
+    # Build LSTM architecture (with Dropout for regularisation)
     # Input shape now: (LOOKBACK=28, n_feat) — 7 days × 4 six-hour slots
     # Output shape:    (FORECAST=12, n_feat) — 3 days × 4 six-hour slots
     model = tf.keras.Sequential([
-        tf.keras.layers.Bidirectional(
-            tf.keras.layers.GRU(64, return_sequences=True),
-            input_shape=(lookback, n_feat)
-        ),
+        tf.keras.layers.LSTM(64, return_sequences=True, input_shape=(lookback, n_feat)),
         tf.keras.layers.Dropout(0.2),
-        tf.keras.layers.Bidirectional(tf.keras.layers.GRU(32)),
+        tf.keras.layers.LSTM(32),
         tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(forecast_slots * n_feat),
         tf.keras.layers.Reshape((forecast_slots, n_feat)),
@@ -509,8 +506,8 @@ def _train_and_save_model(resampled_df, avail_feats, model_path,
         return False, f"Training failed: {e}"
 
 
-def _run_bigru_section(cleaned_df, date_col_name):
-    """Renders the BiGRU validation section inside run_prediction_page()."""
+def _run_lstm_section(cleaned_df, date_col_name):
+    """Renders the LSTM validation section inside run_prediction_page()."""
     import plotly.graph_objects as go
     from sklearn.metrics import mean_absolute_error, mean_squared_error
 
@@ -521,7 +518,7 @@ def _run_bigru_section(cleaned_df, date_col_name):
             <div>
                 <p style="margin:0; font-size:0.7rem; font-weight:700; letter-spacing:.12em;
                            text-transform:uppercase; color:#8DA4B8;">
-                    Bidirectional GRU Neural Network &mdash; 6-Hour Resolution</p>
+                    Long Short-Term Memory (LSTM) Neural Network &mdash; 6-Hour Resolution</p>
                 <h2 style="margin:0; color:#1A3A5C;">Model Validation &amp; Accuracy</h2>
                 <p style="margin:2px 0 0 0; color:#627D98; font-size:0.85rem;">
                     Holdout test &mdash; 28-slot (7-day) input &rarr; 12-slot (3-day) forecast vs. ground truth
@@ -534,7 +531,7 @@ def _run_bigru_section(cleaned_df, date_col_name):
     )
 
     # ── Prepare holdout data ────────────────────────────────────────────────
-    with st.spinner("📊 Preparing data for BiGRU validation…"):
+    with st.spinner("📊 Preparing data for LSTM validation…"):
         X_input, y_true, scaler, avail_feats, daily_df, err = _prepare_holdout(
             cleaned_df, date_col_name)
 
@@ -543,13 +540,13 @@ def _run_bigru_section(cleaned_df, date_col_name):
         return
 
     # ── Load model ──────────────────────────────────────────────────────────
-    MODEL_PATH = os.path.join(os.path.dirname(__file__), "water_quality_bigru.h5")
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), "water_quality_lstm.h5")
 
     model_col, _ = st.columns([3, 1])
     with model_col:
         if not os.path.exists(MODEL_PATH):
             st.error(
-                "🚫 **Model file not found** — `water_quality_bigru.h5` is missing from the "
+                "🚫 **Model file not found** — `water_quality_lstm.h5` is missing from the "
                 "project root. Train and save the model first, then re-upload your data.",
                 icon="🚫"
             )
@@ -560,20 +557,20 @@ def _run_bigru_section(cleaned_df, date_col_name):
 python -c "
 import numpy as np
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Bidirectional, GRU, Dense, Reshape
+from tensorflow.keras.layers import LSTM, Dense, Reshape
 from model_prep import prep_data_for_dl
 
 X, y, scaler, feats = prep_data_for_dl('nccr_data.csv')
 n_feat = len(feats)
 model = Sequential([
-    Bidirectional(GRU(64, return_sequences=True), input_shape=(7, n_feat)),
-    Bidirectional(GRU(32)),
+    LSTM(64, return_sequences=True, input_shape=(7, n_feat)),
+    LSTM(32),
     Dense(3 * n_feat),
     Reshape((3, n_feat))
 ])
 model.compile(optimizer='adam', loss='mae')
 model.fit(X, y, epochs=50, batch_size=32, validation_split=0.1)
-model.save('water_quality_bigru.h5')
+model.save('water_quality_lstm.h5')
 print('Model saved.')
 "
                     """,
@@ -581,7 +578,7 @@ print('Model saved.')
                 )
             return
 
-        with st.spinner("🧠 Loading BiGRU neural network weights…"):
+        with st.spinner("🧠 Loading LSTM neural network weights…"):
             try:
                 # Suppress TF verbosity
                 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -595,7 +592,7 @@ print('Model saved.')
             except Exception as e:
                 st.error(f"❌ Failed to load model: {e}")
                 return
-        st.success("✅ BiGRU model loaded successfully", icon="🤖")
+        st.success("✅ LSTM model loaded successfully", icon="🤖")
 
     # ── Reconcile model's expected feature count with available data ──────────
     # model.input_shape = (None, lookback, n_features_at_training_time)
@@ -630,13 +627,13 @@ print('Model saved.')
             )
         with col_info:
             st.caption(
-                "This overwrites `water_quality_bigru.h5` with a new model "
+                "This overwrites `water_quality_lstm.h5` with a new model "
                 "trained on your full dataset. After training, re-upload your "
                 "file to see predictions for all parameters."
             )
 
         if retrain_clicked:
-            train_bar = st.progress(0, text="🚀 Initialising BiGRU training…")
+            train_bar = st.progress(0, text="🚀 Initialising LSTM training…")
             train_bar.progress(10, text="📐 Building model architecture…")
             ok, msg = _train_and_save_model(
                 resampled_df = daily_df,   # daily_df is now the 6h-resampled df
@@ -655,6 +652,14 @@ print('Model saved.')
                 train_bar.empty()
                 st.error(f"❌ Retraining failed: {msg}")
         else:
+            if data_n_feat < model_n_feat:
+                st.error(
+                    f"❌ **Cannot run inference.** The current model requires **{model_n_feat}** features, "
+                    f"but your data only has **{data_n_feat}**. Please click the **Retrain Model** button above.",
+                    icon="🛑"
+                )
+                return
+
             # Show partial results using trimmed features while user hasn't retrained
             st.info(
                 f"ℹ️ Showing results for **{model_n_feat}** feature(s) only "
@@ -677,7 +682,7 @@ print('Model saved.')
 
     # ── Run inference ───────────────────────────────────────────────────────
     # 3-step progress bar so the user can see exactly what is happening
-    progress_bar = st.progress(0, text="🔮 Starting BiGRU inference…")
+    progress_bar = st.progress(0, text="🔮 Starting LSTM inference…")
     try:
         progress_bar.progress(25, text="⚙️ Step 1 / 3 — Feeding input window to model…")
         raw_pred = model.predict(X_input, verbose=0)
@@ -722,7 +727,7 @@ print('Model saved.')
             f"⚠️ **Stale model detected** — current model outputs **{actual_forecast_steps} steps** "
             f"but the pipeline now uses **{FORECAST} six-hour slots**. "
             f"Results shown for {actual_forecast_steps} step(s) only. "
-            f"Click **🔄 Retrain BiGRU** below to upgrade to full 6-hour resolution.",
+            f"Click **🔄 Retrain LSTM** below to upgrade to full 6-hour resolution.",
             icon="⚠️"
         )
 
@@ -814,7 +819,7 @@ print('Model saved.')
     fig.add_trace(go.Scatter(
         x=day_labels,
         y=y_pred[:, primary_idx].tolist(),
-        name="BiGRU Prediction",
+        name="LSTM Prediction",
         mode="lines+markers",
         line=dict(color="#2A8A7A", width=3, dash="dot"),
         marker=dict(size=9, symbol="diamond"),
@@ -976,7 +981,7 @@ def run_prediction_page():
     st.header("🔮 Marine AI Prediction & Validation")
     st.info(
         "Upload cleaned or raw field data below. The NCCR pipeline will standardise it, "
-        "then the BiGRU neural network will validate its 3-day forecast accuracy.",
+        "then the LSTM neural network will validate its 3-day forecast accuracy.",
         icon="📡"
     )
 
@@ -1000,5 +1005,5 @@ def run_prediction_page():
 
     st.divider()
 
-    # Step 2 — BiGRU validation
-    _run_bigru_section(cleaned_df, date_col_name)
+    # Step 2 — LSTM validation
+    _run_lstm_section(cleaned_df, date_col_name)

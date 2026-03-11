@@ -1,6 +1,6 @@
 # train_model.py
 # Run once: python train_model.py
-# Trains the BiGRU model and saves water_quality_bigru.h5
+# Trains the LSTM model and saves water_quality_lstm.h5
 
 import os
 import sys
@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 # ── Config ────────────────────────────────────────────────────────────────────
-MODEL_PATH     = os.path.join(os.path.dirname(__file__), "water_quality_bigru.h5")
+MODEL_PATH     = os.path.join(os.path.dirname(__file__), "water_quality_lstm.h5")
 FEATURES       = ['water_temp', 'ph', 'do', 'salinity', 'Chl(ug/l)']
 LOOKBACK_SLOTS = 28
 FORECAST_SLOTS = 12
@@ -120,20 +120,20 @@ X = np.array(X)
 y = np.array(y)
 print(f"🧮 X: {X.shape}  |  y: {y.shape}")
 
-# ── 5. Build BiGRU ────────────────────────────────────────────────────────────
+# ── 5. Build LSTM ────────────────────────────────────────────────────────────
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Bidirectional, GRU, Dense, Dropout, Reshape, Input
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Reshape, Input
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 tf.get_logger().setLevel('ERROR')
 
 model = Sequential([
     Input(shape=(LOOKBACK_SLOTS, n_feat)),
-    Bidirectional(GRU(64, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(1e-5))),
+    LSTM(64, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
     tf.keras.layers.LayerNormalization(),
     Dropout(0.2),
-    Bidirectional(GRU(32, kernel_regularizer=tf.keras.regularizers.l2(1e-5))),
+    LSTM(32, kernel_regularizer=tf.keras.regularizers.l2(1e-5)),
     tf.keras.layers.LayerNormalization(),
     Dropout(0.2),
     Dense(FORECAST_SLOTS * n_feat, activation='linear'),
@@ -148,7 +148,7 @@ callbacks = [
     ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, min_lr=1e-6, verbose=1),
 ]
 
-print("\n[START] Training BiGRU...")
+print("\n[START] Training LSTM...")
 history = model.fit(
     X, y,
     epochs=300,

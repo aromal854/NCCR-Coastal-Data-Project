@@ -282,9 +282,9 @@ def main_app():
 
             st.markdown(alerts_html, unsafe_allow_html=True)
 
-        # ── BiGRU 3-Day Forecast Summary ──────────────────────────
+        # ── LSTM 3-Day Forecast Summary ──────────────────────────
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-        st.markdown('<p class="nccr-section-label">3-Day Water Quality Forecast (6-Hour Resolution, 12 Windows) — Powered by Bidirectional GRU Neural Network</p>', unsafe_allow_html=True)
+        st.markdown('<p class="nccr-section-label">3-Day Water Quality Forecast (6-Hour Resolution, 12 Windows) — Powered by Long Short-Term Memory (LSTM) Neural Network</p>', unsafe_allow_html=True)
 
         today = date.today()
         forecast_rows = []
@@ -295,10 +295,10 @@ def main_app():
             from sklearn.preprocessing import MinMaxScaler
             from prediction import FEATURES, RESAMP_FREQ, _smart_6h_aggregate, LOOKBACK
 
-            MODEL_PATH = os.path.join(os.getcwd(), "water_quality_bigru.h5")
+            MODEL_PATH = os.path.join(os.getcwd(), "water_quality_lstm.h5")
             
             if not os.path.exists(MODEL_PATH):
-                forecast_error = "BiGRU Model missing. Please train it via the ML Prediction tab first."
+                forecast_error = "LSTM Model missing. Please train it via the ML Prediction tab first."
             elif live_df.empty:
                 forecast_error = "No live data available to seed the forecast."
             else:
@@ -326,7 +326,7 @@ def main_app():
                     avail_feats = [f for f in FEATURES if f in renamed_df.columns]
 
                     if len(avail_feats) < 2:
-                        forecast_error = "Not enough supported features to run BiGRU inference."
+                        forecast_error = "Not enough supported features to run LSTM inference."
                     else:
                         for f in avail_feats:
                             renamed_df[f] = pd.to_numeric(renamed_df[f], errors='coerce')
@@ -354,7 +354,7 @@ def main_app():
                             
                             model_n_feat = model.input_shape[-1]
                             if len(FEATURES) != model_n_feat:
-                                forecast_error = f"Model configuration shift! Model needs {model_n_feat} features, but internal config has {len(FEATURES)}. Please retrain the BiGRU model!"
+                                forecast_error = f"Model configuration shift! Model needs {model_n_feat} features, but internal config has {len(FEATURES)}. Please retrain the LSTM model!"
                             else:
                                 raw_pred = model.predict(X_input, verbose=0)
                                 if raw_pred.ndim == 2:

@@ -7,7 +7,7 @@
 #   2. Append to master_raw_data.csv  (no data loss)
 #   3. Clean via prediction.clean_marine_data()
 #   4. Save cleaned output as nccr_data.csv
-#   5. BiGRU 3-day forecast via model_prep + Keras model
+#   5. LSTM 3-day forecast via model_prep + Keras model
 # ============================================================
 
 import os
@@ -45,7 +45,7 @@ FTP_EXT:        str = ".csv"
 
 MASTER_CSV:    str      = "master_raw_data.csv"          # Historical database
 CLEANED_CSV:  str      = "nccr_data.csv"                  # Output of cleaning step
-MODEL_PATH:   str      = "water_quality_bigru.h5"         # Trained BiGRU model
+MODEL_PATH:   str      = "water_quality_lstm.h5"         # Trained LSTM model
 LOOKBACK:     int      = 28                                 # Must match model_prep.py
 FORECAST_SLOTS: int    = 12                                 # Must match model training
 FEATURES: list[str]    = ["Water_Temp", "pH", "DO", "Salinity", "Chl(ug/l)"]
@@ -201,12 +201,12 @@ def run_impurification(combined_df: pd.DataFrame, cleaned_path: str) -> pd.DataF
 
 
 # ═════════════════════════════════════════════════════════════
-# STEP 3 — BiGRU 3-DAY FORECAST
+# STEP 3 — LSTM 3-DAY FORECAST
 # ═════════════════════════════════════════════════════════════
 
-def run_bigru_forecast(cleaned_csv: str, model_path: str) -> pd.DataFrame | None:
+def run_lstm_forecast(cleaned_csv: str, model_path: str) -> pd.DataFrame | None:
     """
-    Loads the trained BiGRU model and generates a 3-day forecast.
+    Loads the trained LSTM model and generates a 3-day forecast.
 
     Parameters
     ----------
@@ -219,7 +219,7 @@ def run_bigru_forecast(cleaned_csv: str, model_path: str) -> pd.DataFrame | None
     """
 
     # ── 3a. Prepare data ──────────────────────────────────────
-    log.info("Preparing data for BiGRU via model_prep.prep_data_for_dl…")
+    log.info("Preparing data for LSTM via model_prep.prep_data_for_dl…")
     try:
         X, y, scaler, available_features = prep_data_for_dl(cleaned_csv)
     except Exception as e:
@@ -238,7 +238,7 @@ def run_bigru_forecast(cleaned_csv: str, model_path: str) -> pd.DataFrame | None
         log.error(f"Model file not found: '{model_path}'")
         return None
 
-    log.info(f"Loading BiGRU model from '{model_path}'…")
+    log.info(f"Loading LSTM model from '{model_path}'…")
     try:
         # compile=False skips deserializing saved metrics/optimizer config,
         # which fixes "Could not deserialize 'keras.metrics.mae'" on Keras 3+.
@@ -332,16 +332,16 @@ def run_pipeline(skip_ftp: bool = False):
         log.error("Cleaning step failed. Aborting pipeline.")
         return
 
-    # ── STEP 3: BiGRU Forecast ────────────────────────────────
-    forecast_df = run_bigru_forecast(CLEANED_CSV, MODEL_PATH)
+    # ── STEP 3: LSTM Forecast ────────────────────────────────
+    forecast_df = run_lstm_forecast(CLEANED_CSV, MODEL_PATH)
 
     if forecast_df is None:
-        log.error("BiGRU forecast failed.")
+        log.error("LSTM forecast failed.")
         return
 
     # ── RESULT ────────────────────────────────────────────────
     print("\n" + "=" * 60)
-    print("  🌊 NCCR BiGRU — 3-Day Marine Quality Forecast")
+    print("  🌊 NCCR LSTM — 3-Day Marine Quality Forecast")
     print("=" * 60)
     print(forecast_df.to_string(float_format=lambda x: f"{x:.3f}"))
     print("=" * 60 + "\n")
@@ -357,7 +357,7 @@ def run_pipeline(skip_ftp: bool = False):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="NCCR Live FTP → Clean → BiGRU Pipeline")
+    parser = argparse.ArgumentParser(description="NCCR Live FTP → Clean → LSTM Pipeline")
     parser.add_argument(
         "--skip-ftp",
         action="store_true",
