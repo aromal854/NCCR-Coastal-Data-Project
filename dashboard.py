@@ -295,7 +295,6 @@ def main_app():
             from sklearn.preprocessing import MinMaxScaler
             from prediction import FEATURES, RESAMP_FREQ, _smart_6h_aggregate, LOOKBACK
 
-            import os
             _base_dir = os.path.dirname(os.path.abspath(__file__))
             if _base_dir.endswith("__pycache__"):
                 _base_dir = os.path.dirname(_base_dir)
