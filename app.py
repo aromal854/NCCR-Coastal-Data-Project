@@ -98,24 +98,39 @@ def apply_nccr_branding():
         }
 
 
-        /* ── 3. SIDEBAR — always visible, never collapsible ─── */
-        [data-testid="stSidebar"] {
-            transform: none !important;
-            margin-left: 0 !important;
-            min-width: 244px !important;
-            visibility: visible !important;
-            display: flex !important;
+        /* ── 3. SIDEBAR — always visible on desktop, toggleable on mobile ─── */
+        @media (min-width: 769px) {
+            [data-testid="stSidebar"] {
+                transform: none !important;
+                margin-left: 0 !important;
+                min-width: 244px !important;
+                visibility: visible !important;
+                display: flex !important;
+            }
+            /* Hide collapse/expand buttons on desktop */
+            [data-testid="collapsedControl"],
+            [data-testid="stSidebarCollapseButton"] {
+                display: none !important;
+            }
         }
+        
+        @media (max-width: 768px) {
+            /* On mobile, ONLY hide the top header space, but keep the collapse button visible */
+            header[data-testid="stHeader"] {
+                display: block !important;
+                background: transparent !important;
+                height: 3rem !important;
+            }
+            [data-testid="collapsedControl"],
+            [data-testid="stSidebarCollapseButton"] {
+                display: flex !important;
+            }
+        }
+
         [data-testid="stSidebar"] > div:first-child {
             background: linear-gradient(180deg, #EAF3FB 0%, #D7E8F5 55%, #D4E2F0 100%) !important;
             border-right: 1px solid var(--nccr-border) !important;
         }
-        /* Hide collapse/expand buttons since sidebar is always open */
-        [data-testid="collapsedControl"],
-        [data-testid="stSidebarCollapseButton"] {
-            display: none !important;
-        }
-        [data-testid="stSidebar"] span {
             color: #1A3A5C !important;
         }
         [data-testid="stSidebarNav"] {
