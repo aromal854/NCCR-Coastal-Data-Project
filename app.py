@@ -107,11 +107,6 @@ def apply_nccr_branding():
                 visibility: visible !important;
                 display: flex !important;
             }
-            /* Hide collapse/expand buttons on desktop */
-            [data-testid="collapsedControl"],
-            [data-testid="stSidebarCollapseButton"] {
-                display: none !important;
-            }
         }
         
         @media (max-width: 768px) {
