@@ -131,11 +131,13 @@ def apply_nccr_branding():
             background: linear-gradient(180deg, #EAF3FB 0%, #D7E8F5 55%, #D4E2F0 100%) !important;
             border-right: 1px solid var(--nccr-border) !important;
         }
-            color: #1A3A5C !important;
-        }
+        
+        /* Hide Default Streamlit Page Navigation */
+        [data-testid="stSidebarNavItems"],
         [data-testid="stSidebarNav"] {
             display: none !important;
         }
+        
         /* Radio nav items */
         div[class*="stRadio"] > div > label {
             border-radius: 12px !important;
