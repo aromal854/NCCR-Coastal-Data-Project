@@ -95,8 +95,24 @@ def send_verification_email(to_email, prof_name, request_id, user_name):
         return False
 
 def app():
-    st.header("Submit Marine Field Data")
-    st.info("Choose 'Single Entry' for manual input or 'Bulk Upload' for large datasets.")
+    st.markdown(
+        """
+        <div class="nccr-hero" style="margin-top:14px;">
+            <div class="nccr-section-label">Contribute</div>
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+                <span class="material-symbols-rounded nccr-icon">upload_file</span>
+                <div>
+                    <h2 style="margin:0;">Submit Marine Field Data</h2>
+                    <p class="nccr-card-subtitle" style="margin-top:6px;">
+                        Choose <b>Single Entry</b> for manual input or <b>Bulk Upload</b> for large datasets.
+                    </p>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
     # Initialize State Variables
     certificate_ready = False

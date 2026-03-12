@@ -16,13 +16,28 @@ df_results = pd.DataFrame(data)
 
 st.set_page_config(page_title="Model Comparison Results", layout="wide")
 
-st.title("📊 Model Comparison Results (OG Dataset)")
-st.markdown("Results based on the 5-year full dataset `Chennai_2019-2024(OG).xlsx`.")
+st.markdown(
+    """
+    <div class="nccr-hero" style="margin-top:14px;">
+        <div class="nccr-section-label">Models</div>
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+            <span class="material-symbols-rounded nccr-icon">analytics</span>
+            <div>
+                <h2 style="margin:0;">Model Comparison Results (OG Dataset)</h2>
+                <p class="nccr-card-subtitle" style="margin-top:6px;">
+                    Results based on the 5-year full dataset <code>Chennai_2019-2024(OG).xlsx</code>.
+                </p>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown("### 🏆 Final Comparison Table")
 st.dataframe(df_results, use_container_width=True)
 
-col1, col2 = st.columns(2)
+col1, col2 = st.columns(2, gap="large")
 
 with col1:
     st.markdown("### 📉 Per-parameter MAE")

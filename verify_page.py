@@ -14,7 +14,24 @@ def show(request_id_from_app=None):
     # Set page config only if not already set (though app.py sets it usually)
     # st.set_page_config(page_title="Data Verification", page_icon="✅", layout="wide")
     
-    st.title("🛡️ External Professor Verification")
+    st.markdown(
+        """
+        <div class="nccr-hero" style="margin-top:14px;">
+            <div class="nccr-section-label">Verification</div>
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+                <span class="material-symbols-rounded nccr-icon">verified_user</span>
+                <div>
+                    <h2 style="margin:0;">External Professor Verification</h2>
+                    <p class="nccr-card-subtitle" style="margin-top:6px;">
+                        Review the submission batch and approve or discard it securely.
+                    </p>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
     # If ID passed from app.py, use it. Otherwise try to get from query params (fallback)
     request_id = request_id_from_app
@@ -28,7 +45,7 @@ def show(request_id_from_app=None):
             request_id = params.get("id", [None])[0]
 
     if not request_id:
-        st.error("❌ Invalid or missing Request ID.")
+        st.error("Invalid or missing Request ID.")
         st.info("Please use the full link provided in the verification email.")
         return
 
@@ -46,7 +63,7 @@ def show(request_id_from_app=None):
         batch = df[df['request_id'] == str(request_id)]
         
         if batch.empty:
-            st.warning("⚠️ This verification link is invalid or has already been processed.")
+            st.warning("This verification link is invalid or has already been processed.")
             st.info("You can close this window.")
             return
             
@@ -55,7 +72,20 @@ def show(request_id_from_app=None):
         prof_name = first_row.get('prof_name', 'Professor')
         university = first_row.get('university', 'Institution')
         
-        st.success(f"Welcome, **Prof. {prof_name}** from **{university}**!")
+        st.markdown(
+            f"""
+            <div class="nccr-card" style="padding:14px 14px;">
+                <div class="nccr-section-label">Welcome</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div style="font-weight:800; color:var(--nccr-ink-2); font-size:1.02rem;">
+                        Prof. {prof_name}
+                    </div>
+                    <div class="nccr-pill">{university}</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         
         count = len(batch)
         if count > 1:
@@ -64,7 +94,7 @@ def show(request_id_from_app=None):
             st.write("Please review the following marine data submission.")
         
         # Display Data (Exclude metadata for cleaner view)
-        st.subheader("📊 Submitted Data")
+        st.subheader("Submitted Data")
         
         display_cols = [c for c in batch.columns if c not in ['request_id', 'prof_email', 'prof_name', 'university', 'status']]
         st.dataframe(batch[display_cols], width='stretch')
@@ -72,9 +102,9 @@ def show(request_id_from_app=None):
         st.markdown("---")
         st.subheader("Decision")
         
-        c1, c2, c3 = st.columns(3)
+        c1, c2, c3 = st.columns(3, gap="small")
         
-        if c1.button("✅ Verify & Approve Batch", type="primary"):
+        if c1.button("Verify & Approve Batch", type="primary"):
             # 1. Prepare Data
             prof_tag = f"{prof_name} ({university})"
             
@@ -123,19 +153,19 @@ def show(request_id_from_app=None):
                 df_clean.to_csv(PENDING_CSV, index=False)
                 
                 st.balloons()
-                st.success(f"✅ {len(clean_data_list)} Records Verified and Approved! Thank you for your contribution.")
+                st.success(f"{len(clean_data_list)} records verified and approved. Thank you for your contribution.")
                 st.stop()
             else:
-                st.error(f"❌ Error saving to database: {msg}")
+                st.error(f"Error saving to database: {msg}")
 
-        if c2.button("❌ Discard Batch"):
+        if c2.button("Discard Batch"):
             # Remove from Pending
             df_clean = df[df['request_id'] != str(request_id)]
             df_clean.to_csv(PENDING_CSV, index=False)
             st.error("Data batch has been discarded.")
             st.stop()
             
-        if c3.button("⏳ Busy / Later"):
+        if c3.button("Busy / Later"):
             st.info("No action taken. You can come back later using the same link.")
 
         st.markdown("---")

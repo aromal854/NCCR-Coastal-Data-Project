@@ -13,6 +13,25 @@ def apply_nccr_branding():
     st.markdown(
         """
         <style>
+        /* ── DESIGN TOKENS (Ocean theme) ───────────────────── */
+        :root {
+            --nccr-bg0: #F4F8FC;
+            --nccr-bg1: #EEF6FB;
+            --nccr-surface: #FFFFFF;
+            --nccr-ink: #0F2D3D;
+            --nccr-ink-2: #1A3A5C;
+            --nccr-muted: #627D98;
+            --nccr-muted-2: #8DA4B8;
+            --nccr-border: rgba(26, 58, 92, 0.10);
+            --nccr-shadow: 0 10px 30px rgba(10, 38, 64, 0.08);
+            --nccr-shadow-soft: 0 2px 10px rgba(10, 38, 64, 0.06);
+            --nccr-primary: #1A4A6E;   /* deep ocean */
+            --nccr-accent: #2A8A7A;    /* seafoam */
+            --nccr-warn: #B07D3A;      /* sand */
+            --nccr-danger: #DC2626;
+            --nccr-radius: 14px;
+        }
+
         /* ── 0. HIDE STREAMLIT CHROME ──────────────────────── */
         header[data-testid="stHeader"] {
             display: none !important;
@@ -39,6 +58,7 @@ def apply_nccr_branding():
 
         /* ── 1. TYPOGRAPHY ─────────────────────────────────── */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..200');
 
         /* Exclude material icon classes from the global font override to avoid text overlaps in dataframes */
         *:not(i):not([class*="material"]):not([data-testid="stIconMaterial"])::before, 
@@ -51,7 +71,7 @@ def apply_nccr_branding():
         [data-testid="stMarkdownContainer"] h1,
         [data-testid="stMarkdownContainer"] h2,
         [data-testid="stMarkdownContainer"] h3 {
-            color: #1A3A5C !important;
+            color: var(--nccr-ink-2) !important;
             font-weight: 700 !important;
             letter-spacing: -0.02em !important;
         }
@@ -63,11 +83,18 @@ def apply_nccr_branding():
 
         /* ── 2. BACKGROUND ──────────────────────────────────── */
         [data-testid="stAppViewContainer"] {
-            background: #F4F7FB !important;
+            background: radial-gradient(1400px 800px at 18% 0%, var(--nccr-bg1) 0%, var(--nccr-bg0) 55%, #F7FBFF 100%) !important;
         }
         [data-testid="stHeader"] {
             background: transparent !important;
             backdrop-filter: blur(6px) !important;
+        }
+
+        /* Content width + spacing */
+        section.main > div.block-container {
+            padding-top: 1.4rem !important;
+            padding-bottom: 2.2rem !important;
+            max-width: 1280px !important;
         }
 
 
@@ -80,8 +107,8 @@ def apply_nccr_branding():
             display: flex !important;
         }
         [data-testid="stSidebar"] > div:first-child {
-            background: linear-gradient(180deg, #E8EFF8 0%, #D6E2F0 100%) !important;
-            border-right: 1px solid rgba(26, 58, 92, 0.10) !important;
+            background: linear-gradient(180deg, #EAF3FB 0%, #D7E8F5 55%, #D4E2F0 100%) !important;
+            border-right: 1px solid var(--nccr-border) !important;
         }
         /* Hide collapse/expand buttons since sidebar is always open */
         [data-testid="collapsedControl"],
@@ -96,8 +123,8 @@ def apply_nccr_branding():
         }
         /* Radio nav items */
         div[class*="stRadio"] > div > label {
-            border-radius: 8px !important;
-            padding: 4px 8px !important;
+            border-radius: 12px !important;
+            padding: 6px 10px !important;
             transition: background 0.2s !important;
         }
         div[class*="stRadio"] > div > label:hover {
@@ -105,7 +132,7 @@ def apply_nccr_branding():
         }
         div[class*="stRadio"] > div > label[data-selected="true"] {
             background: rgba(42, 138, 122, 0.16) !important;
-            border-left: 3px solid #2A8A7A !important;
+            border-left: 3px solid var(--nccr-accent) !important;
         }
         div[class*="stRadio"] > div > label > div[data-testid="stMarkdownContainer"] > p {
             font-size: 0.95rem !important;
@@ -116,16 +143,16 @@ def apply_nccr_branding():
         div[data-testid="stMetric"],
         div[data-testid="stMetric"] > div,
         .nccr-card {
-            background: #FFFFFF !important;
-            border: 1px solid rgba(26, 58, 92, 0.08) !important;
-            border-radius: 10px !important;
+            background: var(--nccr-surface) !important;
+            border: 1px solid rgba(26, 58, 92, 0.09) !important;
+            border-radius: var(--nccr-radius) !important;
             padding: 14px 18px !important;
-            box-shadow: 0 2px 8px rgba(26, 58, 92, 0.06) !important;
+            box-shadow: var(--nccr-shadow-soft) !important;
             transition: box-shadow 0.25s ease, transform 0.25s ease !important;
         }
         div[data-testid="stMetric"]:hover,
         .nccr-card:hover {
-            box-shadow: 0 6px 20px rgba(26, 58, 92, 0.11) !important;
+            box-shadow: var(--nccr-shadow) !important;
             border-color: rgba(42, 138, 122, 0.30) !important;
             transform: translateY(-2px) !important;
         }
@@ -139,7 +166,7 @@ def apply_nccr_branding():
             letter-spacing: 0.07em !important;
         }
         div[data-testid="stMetricValue"] div {
-            color: #1A3A5C !important;
+            color: var(--nccr-ink-2) !important;
             font-weight: 700 !important;
             font-size: 2rem !important;
         }
@@ -151,10 +178,10 @@ def apply_nccr_branding():
         /* ── 5. BUTTONS ─────────────────────────────────────── */
         [data-testid="baseButton-primary"],
         [data-testid="baseButton-secondary"] {
-            background-color: #2A8A7A !important;
+            background-color: var(--nccr-accent) !important;
             color: #FFFFFF !important;
             border: none !important;
-            border-radius: 8px !important;
+            border-radius: 12px !important;
             font-weight: 600 !important;
             letter-spacing: 0.01em !important;
             box-shadow: 0 2px 6px rgba(42, 138, 122, 0.25) !important;
@@ -184,9 +211,9 @@ def apply_nccr_branding():
         /* ── 7. CONTAINERS / TABLES ─────────────────────────── */
         div[data-testid="stDataFrame"],
         div[data-testid="stTable"] {
-            background: #FFFFFF !important;
+            background: var(--nccr-surface) !important;
             border: 1px solid rgba(26, 58, 92, 0.09) !important;
-            border-radius: 10px !important;
+            border-radius: var(--nccr-radius) !important;
             overflow: hidden !important;
         }
         div[data-testid="stExpander"] details {
@@ -255,6 +282,64 @@ def apply_nccr_branding():
             margin-bottom: 4px;
         }
 
+        /* ── 11. REUSABLE LAYOUT HELPERS ───────────────────── */
+        .nccr-hero {
+            border-radius: calc(var(--nccr-radius) + 4px);
+            border: 1px solid rgba(26, 58, 92, 0.10);
+            background:
+                radial-gradient(900px 340px at 20% 0%, rgba(42, 138, 122, 0.18) 0%, rgba(42, 138, 122, 0.00) 55%),
+                radial-gradient(900px 380px at 85% 0%, rgba(26, 74, 110, 0.18) 0%, rgba(26, 74, 110, 0.00) 60%),
+                linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.96) 100%);
+            box-shadow: var(--nccr-shadow-soft);
+            padding: 18px 18px;
+        }
+        .nccr-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(26, 58, 92, 0.10);
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--nccr-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .nccr-card-title {
+            font-weight: 700;
+            color: var(--nccr-ink-2);
+            margin: 0 0 4px 0;
+        }
+        .nccr-card-subtitle {
+            margin: 0;
+            color: var(--nccr-muted);
+            font-size: 0.88rem;
+        }
+
+        /* Material icons (formal) */
+        .material-symbols-rounded {
+            font-family: 'Material Symbols Rounded' !important;
+            font-weight: 600;
+            font-style: normal;
+            font-size: 22px;
+            line-height: 1;
+            display: inline-block;
+            vertical-align: -0.25em;
+            letter-spacing: normal;
+            text-transform: none;
+            white-space: nowrap;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        .nccr-icon {
+            color: var(--nccr-primary);
+            background: rgba(26, 74, 110, 0.08);
+            border: 1px solid rgba(26, 74, 110, 0.12);
+            border-radius: 12px;
+            padding: 8px;
+        }
+
         /* ── 10. FORECAST TABLE ─────────────────────────────── */
         .nccr-forecast-table {
             width: 100%;
@@ -302,6 +387,14 @@ if st.query_params.get("page") == "verify" and st.query_params.get("id"):
     verify_page.show(request_id)
     st.stop()
     
+# --- LOGOUT HANDLER ---
+if st.query_params.get("logout") == "true":
+    st.session_state['logged_in'] = False
+    st.session_state['user_email'] = None
+    if hasattr(st, "query_params") and hasattr(st.query_params, "clear"):
+        st.query_params.clear()
+        
+
 # --- CONFIGURATION ---
 st.set_page_config(
     page_title="NCCR Marine Portal",

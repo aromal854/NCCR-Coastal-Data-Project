@@ -14,31 +14,64 @@ import pages.contribute as contribute_page # NEW IMPORT
 def main_app():
     # --- SIDEBAR (no title inside sidebar) ---
     # Show Name and Unique ID
-    st.sidebar.markdown(f"&#x1f464; **{st.session_state['user_name']}**")
-    st.sidebar.caption(f"ID: {st.session_state['user_id']}")
-    st.sidebar.badge(st.session_state['user_role'])
-    
-    if st.sidebar.button("Logout"):
-        st.session_state['logged_in'] = False
-        st.session_state['user_email'] = None
-        st.rerun()
+    st.sidebar.markdown(
+        f"""
+<div class="nccr-card" style="padding:14px 14px;">
+    <div class="nccr-section-label">Signed in</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div>
+            <div style="font-weight:800; color:var(--nccr-ink-2); font-size:1.02rem; line-height:1.15;">
+                {st.session_state['user_name']}
+            </div>
+            <div style="color:var(--nccr-muted); font-size:0.86rem; margin-top:2px;">
+                ID: {st.session_state['user_id']}
+            </div>
+        </div>
+        <div class="nccr-pill">{st.session_state['user_role']}</div>
+    </div>
+    <a href="?logout=true" target="_self" style="text-decoration: none; color: var(--nccr-ink-2); border: 1px solid rgba(26,58,92,0.15); padding: 6px 14px; border-radius: 6px; font-size: 0.9rem; font-weight: 500; display: block; text-align: center; margin-top: 14px; background-color: white; transition: all 0.2s;">Logout</a>
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
         
 
 
-    st.title("\U0001f30a NCCR Marine Data Portal")
+    st.markdown(
+        """
+        <div class="nccr-hero">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+                <div style="display:flex; gap:12px; align-items:flex-start;">
+                    <span class="material-symbols-rounded nccr-icon">waves</span>
+                    <div>
+                        <div class="nccr-section-label">NCCR Coastal Monitoring Platform</div>
+                        <h2 style="margin:0;">NCCR Marine Data Portal</h2>
+                        <p class="nccr-card-subtitle" style="margin-top:6px;">
+                            Explore, contribute, and analyze coastal water quality signals with a modern dashboard.
+                        </p>
+                    </div>
+                </div>
+                <div class="nccr-pill"><span class="material-symbols-rounded" style="font-size:18px;">shield_lock</span> Live • Secure • Research-ready</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # --- DEFINE MENUS BASED ON ROLE ---
     if st.session_state['user_role'] == 'Admin':
-        options = ["📊 Dashboard Overview", "📥 Contribute Data", "🔮 AI Prediction Tools", "🗺️ Global Data Map", "📰 Research & News", "👮 Data Requests (Approval)", "📂 Master Data Repository", "🗑️ Manage & Delete Data"]
+        options = ["Dashboard Overview", "Contribute Data", "AI Prediction Tools", "Global Data Map", "Research & News", "Data Requests (Approval)", "Master Data Repository", "Manage & Delete Data"]
     else:
-        options = ["📊 Dashboard Overview", "📥 Contribute Data", "🔮 AI Prediction Tools", "🗺️ Global Data Map", "📰 Research & News", "📉 Request & Download Data"]
+        options = ["Dashboard Overview", "Contribute Data", "AI Prediction Tools", "Global Data Map", "Research & News", "Request & Download Data"]
         
-    menu = st.sidebar.radio("Go to:", options)
+    st.sidebar.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+    st.sidebar.markdown("<div class='nccr-section-label'>Navigation</div>", unsafe_allow_html=True)
+    menu = st.sidebar.radio("Go to:", options, label_visibility="collapsed")
 
     # --- ADMIN SIDEBAR ANALYTICS (NEW) ---
     if st.session_state['user_role'] == 'Admin':
         st.sidebar.markdown("---")
-        st.sidebar.subheader("📊 Live Counters")
+        st.sidebar.subheader("Live Counters")
         
         # Quick Fetch for Stats
         stats_df = db.fetch_all_data()
@@ -72,7 +105,7 @@ def main_app():
 
             # Display Metrics
             st.sidebar.metric("Total Data Points", total_records, delta=f"+{new_this_month} this month")
-            st.sidebar.metric("✅ Verified Records", verified_count)
+            st.sidebar.metric("Verified Records", verified_count)
             st.sidebar.caption(f"🏆 Top Region: **{top_loc}**")
         else:
             st.sidebar.warning("No data found.")
@@ -80,20 +113,21 @@ def main_app():
     # -----------------------------------------------------
     # OPTION: AI PREDICTION TOOLS (NEW)
     # -----------------------------------------------------
-    if menu == "🔮 AI Prediction Tools":
+    if menu == "AI Prediction Tools":
         prediction.run_prediction_page() # <--- CALL THE FUNCTION
 
     # -----------------------------------------------------
     # OPTION: DASHBOARD OVERVIEW (NEW - DESKTOP UI)
     # -----------------------------------------------------
-    elif menu == "📊 Dashboard Overview":
+    elif menu == "Dashboard Overview":
         import plotly.graph_objects as go
 
         # ── Header ────────────────────────────────────────────────
         now_str = datetime.now().strftime("%d %b %Y, %H:%M IST")
         st.markdown(
             f"""
-            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:4px;">
+            <div class="nccr-card" style="padding:16px 16px; margin-top:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
                 <div>
                     <p class="nccr-section-label">National Centre for Coastal Research</p>
                     <h2 style="margin:0; color:#1A3A5C;">Scientific Monitoring Overview</h2>
@@ -103,38 +137,34 @@ def main_app():
                 </div>
                 <p style="color:#8DA4B8; font-size:0.8rem; margin:0;">Last updated: {now_str}</p>
             </div>
+            </div>
             """,
             unsafe_allow_html=True,
         )
-        st.markdown("<hr style='margin:12px 0 20px 0;'>", unsafe_allow_html=True)
+        st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+        st.subheader("Live RTMS Buoy Data Sync")
 
-        st.divider()
-        st.subheader("📡 Live RTMS Buoy Data Sync")
-
-        if st.button("🔄 Fetch Latest Data from NCCR Server", type="primary"):
-            with st.spinner("Establishing secure FTP connection and downloading data..."):
+        if st.button("Fetch Latest Data from NCCR Server", type="primary"):
+            with st.spinner("Establishing secure connection to Cloud Repository..."):
                 try:
-                    # Connect to Local Fake Server
-                    ftp = ftplib.FTP()
-                    ftp.connect("127.0.0.1", 2121)
-                    ftp.login("nccr_admin", "password123")
+                    # Cloud Architecture Fix: Fetch from the GitHub Repository directly
+                    github_raw_url = "https://raw.githubusercontent.com/aromal854/NCCR-Coastal-Data-Project/main/Server_Room/buoy_data.csv"
                     
-                    # Download the file
                     filename = "buoy_data.csv"
                     save_path = os.path.join(os.getcwd(), filename) 
                     
-                    with open(save_path, "wb") as file:
-                        ftp.retrbinary(f"RETR {filename}", file.write)
-                    ftp.quit()
+                    # Download the CSV from GitHub and save it locally for the dashboard to read
+                    df_cloud = pd.read_csv(github_raw_url)
+                    df_cloud.to_csv(save_path, index=False)
                     
-                    st.success("✅ Secure FTP Transfer Complete!")
-                    st.toast("Live data synchronized successfully!", icon="🌊")
+                    st.success("Secure Cloud Transfer Complete.")
+                    st.toast("Live data synchronized successfully from the Cloud Repository.")
                     
                     # Instantly refresh the app so the existing UI loads the new CSV
                     st.rerun()
                     
                 except Exception as e:
-                    st.error(f"FTP Connection Failed: {e}")
+                    st.error(f"Cloud Connection Failed: {e}")
 
         # ── Load Live FTP Data ─────────────────────────────────────
         live_df = pd.DataFrame()
@@ -173,15 +203,15 @@ def main_app():
             return default
 
         # ── 4 KPI Metric Cards ────────────────────────────────────
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4 = st.columns(4, gap="small")
         with c1:
-            st.metric("🌡️ Water Temperature", f"{get_val(['Temp', 'Water_Temp'])} °C", "Live Data", delta_color="off")
+            st.metric("Water Temperature", f"{get_val(['Temp', 'Water_Temp'])} °C", "Live Data", delta_color="off")
         with c2:
-            st.metric("⚗️ pH Level", f"{get_val(['pH'], exact=True)}", "Live Data", delta_color="off") # Note pH isn't in dataaaaaaaa6, will fall back cleanly
+            st.metric("pH Level", f"{get_val(['pH'], exact=True)}", "Live Data", delta_color="off") # Note pH isn't in dataaaaaaaa6, will fall back cleanly
         with c3:
-            st.metric("💧 Dissolved Oxygen", f"{get_val(['ODO', 'DO', 'Dissolved_Oxygen'])} mg/L", "Live Data", delta_color="off")
+            st.metric("Dissolved Oxygen", f"{get_val(['ODO', 'DO', 'Dissolved_Oxygen'])} mg/L", "Live Data", delta_color="off")
         with c4:
-            st.metric("🌫️ Turbidity", f"{get_val(['Turb', 'Turbididty'])} NTU", "Live Data", delta_color="off")
+            st.metric("Turbidity", f"{get_val(['Turb', 'Turbididty'])} NTU", "Live Data", delta_color="off")
 
         st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
@@ -431,8 +461,8 @@ def main_app():
     # -----------------------------------------------------
     # OPTION: GLOBAL MAP VIEW (NEW)
     # -----------------------------------------------------
-    elif menu == "🗺️ Global Data Map":
-        st.header("🌍 Global Marine Data Map")
+    elif menu == "Global Data Map":
+        st.header("Global Marine Data Map")
         st.markdown("""
         **Data Visualization Console**  
         🔴 Each point represents a verified field data report.  
@@ -455,7 +485,7 @@ def main_app():
                 if not map_df.empty:
                     # --- INTERACTIVE MAP METRICS ---
                     m1, m2, m3 = st.columns(3)
-                    m1.metric("📍 Active Locations", map_df['Main_Location'].nunique())
+                    m1.metric("Active Locations", map_df['Main_Location'].nunique())
                     m2.metric("📝 Total Reports", len(map_df))
                     m3.metric("📅 Latest Entry", map_df['created_at'].max()[:10] if 'created_at' in map_df else "N/A")
 
@@ -515,14 +545,14 @@ def main_app():
     # -----------------------------------------------------
     # OPTION A: CONTRIBUTE DATA (UPDATED)
     # -----------------------------------------------------
-    elif menu == "📥 Contribute Data":
+    elif menu == "Contribute Data":
         contribute_page.app()
 
     # -----------------------------------------------------
-    # 📰 NEW: RESEARCH & NEWS
+    # Research & News
     # -----------------------------------------------------
-    elif menu == "📰 Research & News":
-        st.header("📰 Marine Research & Official News")
+    elif menu == "Research & News":
+        st.header("Marine Research & Official News")
         st.write("Share findings, official updates, and research papers here.")
         
         # --- UPLOAD SECTION ---
@@ -540,7 +570,7 @@ def main_app():
                     else: st.error(msg)
 
         st.divider()
-        st.subheader("📚 Latest Updates")
+        st.subheader("Latest Updates")
         
         # --- DISPLAY SECTION ---
         papers = db.fetch_papers()
@@ -577,7 +607,7 @@ def main_app():
     # -----------------------------------------------------
     # OPTION B: ADMIN (WITH EMAIL NOTIFICATION)
     # -----------------------------------------------------
-    elif menu == "👮 Data Requests (Approval)":
+    elif menu == "Data Requests (Approval)":
         st.header("Admin Approval Panel")
         req_df = db.fetch_pending_requests()
         if not req_df.empty:
@@ -587,15 +617,15 @@ def main_app():
                     st.write(f"**Date:** {row['request_date']}")
                     c1, c2 = st.columns([1, 4])
                     
-                    if c1.button("✅ Approve", key=f"app_{row['id']}"):
+                    if c1.button("Approve", key=f"app_{row['id']}"):
                         db.update_request_status(row['id'], "Approved")
                         
                         # --- NEW: SEND APPROVAL EMAIL ---
                         msg_body = "Hello,\n\nYour request to access NCCR Marine Data has been APPROVED by the Admin.\nYou can now login and download the data.\n\nRegards,\nNCCR Admin Team"
-                        sent = utils.send_email_notification(row['user_email'], "Data Access Request Approved ✅", msg_body)
+                        sent = utils.send_email_notification(row['user_email'], "Data Access Request Approved", msg_body)
                         
                         if sent: st.toast("📧 Email notification sent to user!")
-                        else: st.toast("⚠️ Data approved, but email failed.")
+                        else: st.toast("Data approved, but email failed.")
                         
                         st.rerun()
                         
@@ -608,15 +638,15 @@ def main_app():
     # -----------------------------------------------------
     # OPTION C: MASTER DATA (UPDATED WITH CASCADING FILTER)
     # -----------------------------------------------------
-    elif menu == "📂 Master Data Repository":
+    elif menu == "Master Data Repository":
         st.header("NCCR Master Database")
         df = db.fetch_all_data()
         
         if not df.empty and 'Main_Location' in df.columns:
-            st.subheader("📍 View Data by Region")
-            view_mode = st.radio("Select View Mode:", ["🌍 Specific Region", "📚 View All Data"], horizontal=True)
+            st.subheader("View Data by Region")
+            view_mode = st.radio("Select View Mode:", ["Specific Region", "View All Data"], horizontal=True)
             
-            if view_mode == "🌍 Specific Region":
+            if view_mode == "Specific Region":
                 # 1. Select State First
                 state_list = list(config.COASTAL_DATA.keys())
                 selected_state = st.selectbox("Select State / UT", state_list)
@@ -629,7 +659,7 @@ def main_app():
                 
                 # Check for Verified_By and highlight it
                 if 'Verified_By' in df.columns:
-                     st.info("💡 Note: Data verified by external professors includes a 'Verified_By' tag.")
+                     st.info("Note: Data verified by external professors includes a 'Verified_By' tag.")
 
                 filtered_options = [
                     loc for loc in db_locations 
@@ -642,7 +672,7 @@ def main_app():
                     
                     # 5. Show Data
                     filtered_df = df[df['Main_Location'] == selected_region]
-                    st.info(f"📂 Found **{len(filtered_df)}** records under **{selected_region}**")
+                    st.info(f"Found **{len(filtered_df)}** records under **{selected_region}**")
                     st.dataframe(filtered_df, width='stretch') # FIXED WIDTH ERROR
                 else:
                     st.warning(f"No data found for any region in {selected_state}")
@@ -656,16 +686,16 @@ def main_app():
     # -----------------------------------------------------
     # OPTION D: DOWNLOAD CENTER (UPDATED)
     # -----------------------------------------------------
-    elif menu == "📊 Request & Download Data":
-        st.header("📂 Advanced Data Download Center")
+    elif menu == "Request & Download Data":
+        st.header("Advanced Data Download Center")
         status = db.check_request_status(st.session_state['user_email'])
         
         if status == "Approved":
-            st.success("✅ Access Granted: You can download data.")
+            st.success("Access Granted: You can download data.")
             raw_df = db.fetch_all_data()
             if not raw_df.empty and 'Main_Location' in raw_df.columns:
                 st.divider()
-                st.subheader("🛠️ Step 1: Select Region")
+                st.subheader("Step 1: Select Region")
                 
                 # --- UPDATED: STATE -> REGION FILTER ---
                 available_locs = raw_df['Main_Location'].dropna().unique().tolist()
@@ -694,7 +724,7 @@ def main_app():
                     st.info(f"Found {len(filtered_df)} records for {selected_loc}.")
                     
                     st.divider()
-                    st.subheader("🛠️ Step 2: Select Parameter Categories")
+                    st.subheader("Step 2: Select Parameter Categories")
                     cat_options = {
                         "Physical Parameters": ["Water_Temp", "Salinity", "pH", "Turbidity", "Transparency", "TSS", "TDS", "Color", "Odour"],
                         "Chemical Parameters": ["DO", "BOD", "COD", "NH4_N", "NO3_N", "NO2_N", "PO4", "SO4"],
@@ -714,14 +744,14 @@ def main_app():
                         export_df = filtered_df[final_cols].copy()
                         export_df.rename(columns=config.COLUMN_CONFIG, inplace=True)
                         csv = export_df.to_csv(index=False).encode('utf-8')
-                        st.download_button(label=f"📥 Download {selected_loc} Data (CSV)", data=csv, file_name=f"NCCR_{selected_loc}_Data.csv", mime="text/csv")
+                        st.download_button(label=f"Download {selected_loc} Data (CSV)", data=csv, file_name=f"NCCR_{selected_loc}_Data.csv", mime="text/csv")
             else:
                 st.warning("Database is empty or missing 'Main_Location' data.")
         elif status == "Pending":
-            st.warning("⏳ Your request is currently PENDING Admin approval.")
+            st.warning("Your request is currently pending admin approval.")
         else:
             if status == "Rejected":
-                st.error("❌ Your previous request was REJECTED.")
+                st.error("Your previous request was rejected.")
             else:
                 st.info("Please submit a request stating your purpose to access data.")
             with st.form("access_req"):
@@ -742,9 +772,9 @@ def main_app():
     # -----------------------------------------------------
     # OPTION E: MANAGE & DELETE DATA (ADMIN ONLY)
     # -----------------------------------------------------
-    elif menu == "🗑️ Manage & Delete Data" and st.session_state['user_role'] == 'Admin':
-        st.header("🗑️ Data Management Console")
-        st.warning("⚠️ Warning: Deleted data cannot be recovered.")
+    elif menu == "Manage & Delete Data" and st.session_state['user_role'] == 'Admin':
+        st.header("Data Management Console")
+        st.warning("Warning: Deleted data cannot be recovered.")
         
         # Fetch Data
         df = db.fetch_all_data()
@@ -782,12 +812,12 @@ def main_app():
                 st.error(f"You have selected {len(selected_ids)} records for DELETION.")
                 st.dataframe(df[df['id'].isin(selected_ids)], width='stretch') # FIXED WIDTH ERROR
                 
-                if st.button("🚨 CONFIRM PERMANENT DELETE"):
+                if st.button("Confirm permanent delete"):
                     success = db.delete_data(selected_ids)
                     if success:
-                        st.success("✅ Records deleted successfully!")
+                        st.success("Records deleted successfully.")
                         st.rerun()
                     else:
-                        st.error("❌ Deletion failed. Check console for details.")
+                        st.error("Deletion failed. Check console for details.")
         else:
             st.info("No data available to delete.")
