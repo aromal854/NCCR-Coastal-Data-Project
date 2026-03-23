@@ -805,12 +805,9 @@ print('Model saved.')
     label_str    = selected_label
 
     # Build 6-hour slot labels for x-axis
-    # daily_df is now a 6h-resampled DataFrame; index[-1] is the last known 6h slot
-    last_slot = daily_df.index[-1]
-    day_labels = [
-        (last_slot + pd.Timedelta(hours=6 * (s + 1))).strftime("%d %b %H:%M")
-        for s in range(FORECAST)
-    ]
+    # Use the actual timestamps from the holdout period (the last FORECAST slots)
+    holdout_timestamps = daily_df.index[-actual_forecast_steps:]
+    day_labels = [dt.strftime("%d %b %H:%M") for dt in holdout_timestamps]
 
     fig = go.Figure()
 
@@ -868,11 +865,14 @@ print('Model saved.')
     slots_per_day_label = "6-Hour" if actual_forecast_steps == FORECAST else "Day"
     st.markdown(f"#### 📋 Full Prediction Table  *({actual_forecast_steps} {slots_per_day_label} Slots)*")
     rows = []
-    last_slot = daily_df.index[-1]
+    
+    # Use the same holdout timestamps for the table
+    holdout_timestamps = daily_df.index[-actual_forecast_steps:]
+    
     for s in range(actual_forecast_steps):
         if actual_forecast_steps == FORECAST:
-            # New 6h model: show 6-hour slot timestamps
-            slot_dt  = last_slot + pd.Timedelta(hours=6 * (s + 1))
+            # New 6h model: show actual session slot timestamps
+            slot_dt  = holdout_timestamps[s]
             day_num  = s // SLOTS_PER_DAY + 1
             row_lbl  = f"Day {day_num}  {slot_dt.strftime('%d %b')}  {slot_dt.strftime('%H:%M')}"
         else:

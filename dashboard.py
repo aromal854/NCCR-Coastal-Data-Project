@@ -458,6 +458,357 @@ def main_app():
         </table>
         """, unsafe_allow_html=True)
 
+        # ══════════════════════════════════════════════════════════════════════
+        # SECTION A — Previous 7-Day Water Quality Statistics
+        # ══════════════════════════════════════════════════════════════════════
+        st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+        st.markdown("""<hr style="margin:0 0 16px 0; border-color:rgba(26,58,92,0.09);">""", unsafe_allow_html=True)
+        st.markdown('<p class="nccr-section-label">Previous 7 Days — Water Quality Statistics</p>', unsafe_allow_html=True)
+
+        try:
+            if os.path.exists(buoy_file):
+                full_buoy = pd.read_csv(buoy_file)
+                d_col_full = next((c for c in full_buoy.columns
+                                   if "date" in c.lower() or "time" in c.lower()), None)
+                if d_col_full:
+                    full_buoy[d_col_full] = pd.to_datetime(full_buoy[d_col_full], errors='coerce')
+                    full_buoy = full_buoy.dropna(subset=[d_col_full]).set_index(d_col_full).sort_index()
+                    week_cutoff = full_buoy.index[-1] - timedelta(days=7)
+                    week_df = full_buoy[full_buoy.index >= week_cutoff]
+
+                    # Identify parameter columns
+                    _temp_col  = next((c for c in week_df.columns if "temp"  in c.lower()), None)
+                    _do_col    = next((c for c in week_df.columns if "odo"   in c.lower() or
+                                       ("do" in c.lower() and "doy" not in c.lower())), None)
+                    _ph_col    = next((c for c in week_df.columns if "ph"    in c.lower()
+                                       and "chloro" not in c.lower()), None)
+                    _turb_col  = next((c for c in week_df.columns if "turb"  in c.lower()), None)
+                    _sal_col   = next((c for c in week_df.columns if "sal"   in c.lower()), None)
+
+                    _week_params = {}
+                    if _temp_col:  _week_params["🌡️ Water Temperature (°C)"]   = (_temp_col,  "#E07B39")
+                    if _do_col:    _week_params["💧 Dissolved Oxygen (mg/L)"]  = (_do_col,   "#1A4A6E")
+                    if _ph_col:    _week_params["⚗️ pH"]                       = (_ph_col,   "#2A8A7A")
+                    if _turb_col:  _week_params["🌊 Turbidity (NTU)"]          = (_turb_col, "#B07D3A")
+                    if _sal_col:   _week_params["🧂 Salinity (psu)"]           = (_sal_col,  "#6B4FA0")
+
+                    if _week_params:
+                        _sel = st.selectbox("Select Parameter to View", list(_week_params.keys()),
+                                            key="weekly_param_sel")
+                        _col_name, _color = _week_params[_sel]
+                        _wvals = pd.to_numeric(week_df[_col_name], errors='coerce')
+
+                        # Stats row
+                        ws1, ws2, ws3, ws4, ws5 = st.columns(5)
+                        ws1.metric("7-Day Mean",  f"{_wvals.mean():.2f}")
+                        ws2.metric("Min",         f"{_wvals.min():.2f}")
+                        ws3.metric("Max",         f"{_wvals.max():.2f}")
+                        ws4.metric("Std Dev",     f"{_wvals.std():.2f}")
+                        ws5.metric("Data Points", f"{_wvals.count()}")
+
+                        _r, _g, _b = int(_color[1:3], 16), int(_color[3:5], 16), int(_color[5:7], 16)
+                        fig_week = go.Figure()
+                        fig_week.add_trace(go.Scatter(
+                            x=week_df.index, y=_wvals,
+                            name=_sel,
+                            mode="lines",
+                            line=dict(color=_color, width=2.5, shape="spline"),
+                            fill="tozeroy",
+                            fillcolor=f"rgba({_r},{_g},{_b},0.07)",
+                        ))
+                        fig_week.update_layout(
+                            height=240,
+                            paper_bgcolor="white", plot_bgcolor="#FAFCFF",
+                            margin=dict(l=8, r=8, t=8, b=8),
+                            font=dict(family="Inter", color="#334E68", size=12),
+                            xaxis=dict(showgrid=False, tickfont_size=10, color="#8DA4B8"),
+                            yaxis=dict(showgrid=True, gridcolor="#EEF2F8",
+                                       tickfont_size=10, color=_color),
+                        )
+                        st.plotly_chart(fig_week, use_container_width=True)
+                    else:
+                        st.info("No recognised sensor columns found in buoy data.")
+                else:
+                    st.info("Buoy data file has no date/time column.")
+            else:
+                st.info("⬆️ Fetch latest data from the NCCR server above to enable weekly statistics.")
+        except Exception as _e:
+            st.warning(f"Could not load weekly statistics: {_e}")
+
+        # ══════════════════════════════════════════════════════════════════════
+        # SECTION B — Emergency Alerts & Sensor Health
+        # ══════════════════════════════════════════════════════════════════════
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+        st.markdown("""<hr style="margin:0 0 16px 0; border-color:rgba(26,58,92,0.09);">""", unsafe_allow_html=True)
+        st.markdown('<p class="nccr-section-label">🚨 Emergency Alerts &amp; Sensor Health Monitor</p>',
+                    unsafe_allow_html=True)
+
+        _THRESHOLDS = {
+            "do":   {"hints": ["odo", "do"],         "strict": False, "crit_low": 3.0,  "warn_low": 5.0,
+                     "crit_high": None, "warn_high": None, "label": "Dissolved Oxygen", "unit": "mg/L"},
+            # pH: strict=True — column must be named exactly 'ph', 'pH', or 'p.h.' to avoid false matches
+            "ph":   {"hints": ["ph", "p.h.", "ph level"], "strict": True, "crit_low": 6.5, "warn_low": 7.0,
+                     "crit_high": 9.0, "warn_high": 8.5, "label": "pH", "unit": ""},
+            "turb": {"hints": ["turb"],              "strict": False, "crit_low": 0,    "warn_low": None,
+                     "crit_high": 50,  "warn_high": 15,  "label": "Turbidity", "unit": "NTU"},
+            "temp": {"hints": ["temp"],              "strict": False, "crit_low": 20,   "warn_low": 22,
+                     "crit_high": 34,  "warn_high": 32,  "label": "Water Temperature", "unit": "°C"},
+            "sal":  {"hints": ["sal"],               "strict": False, "crit_low": 28,   "warn_low": 30,
+                     "crit_high": 38,  "warn_high": 36,  "label": "Salinity", "unit": "psu"},
+            "chl":  {"hints": ["chl", "chloro"],     "strict": False, "crit_low": None, "warn_low": None,
+                     "crit_high": 20,  "warn_high": 10,  "label": "Chlorophyll-a", "unit": "µg/L"},
+        }
+
+        _emerg_alerts, _sensor_failures, _warn_list = [], [], []
+        # _sensor_status: label -> True (online), False (offline/failure), None (absent/not in data)
+        _sensor_status = {}
+
+        if os.path.exists(buoy_file):
+            try:
+                _fb = pd.read_csv(buoy_file)
+                _dc = next((c for c in _fb.columns
+                             if "date" in c.lower() or "time" in c.lower()), None)
+                if _dc:
+                    _fb[_dc] = pd.to_datetime(_fb[_dc], errors='coerce')
+                    _fb = _fb.dropna(subset=[_dc]).set_index(_dc).sort_index()
+                    _recent = _fb.tail(48)  # last ~24-48 readings
+
+                    for _pk, _cfg in _THRESHOLDS.items():
+                        # Strict matching (e.g. pH): column name must exactly equal one of the hints
+                        # Loose matching: column name must contain any of the hints as a substring
+                        if _cfg["strict"]:
+                            _mc = next((c for c in _recent.columns
+                                        if c.lower() in _cfg["hints"]), None)
+                        else:
+                            _mc = next((c for c in _recent.columns
+                                        if any(h in c.lower() for h in _cfg["hints"])), None)
+
+                        if _mc is None:
+                            # Sensor not found in data — mark as absent
+                            _sensor_status[_cfg["label"]] = "absent"
+                            continue
+                        _vals = pd.to_numeric(_recent[_mc], errors='coerce').dropna()
+                        if _vals.empty:
+                            _sensor_status[_cfg["label"]] = None   # no data
+                            continue
+
+                        # Sensor failure: last 6+ readings all zero
+                        _last6 = _vals.tail(6)
+                        if (_last6 == 0).all() and len(_last6) >= 4:
+                            _sensor_failures.append(
+                                f"**{_cfg['label']}** sensor offline — {len(_last6)} consecutive zero readings.")
+                            _sensor_status[_cfg["label"]] = False
+                            continue
+
+                        # Sensor fault: physically impossible negatives (e.g. turbidity, DO can't be < 0)
+                        _last3 = _vals.tail(3)
+                        if _cfg.get("crit_low") is not None and (_last3 < 0).all():
+                            _sensor_failures.append(
+                                f"**{_cfg['label']}** sensor fault — negative readings detected "
+                                f"({_last3.iloc[-1]:.2f} {_cfg['unit']}). Check calibration.")
+                            _sensor_status[_cfg["label"]] = False
+                            continue
+
+                        _sensor_status[_cfg["label"]] = True
+                        _cur = float(_vals.iloc[-1])
+
+                        if _cfg["crit_low"]  and _cur < _cfg["crit_low"]:
+                            _emerg_alerts.append(
+                                f"🔴 **CRITICAL LOW — {_cfg['label']}**: {_cur:.2f} {_cfg['unit']} "
+                                f"(threshold: {_cfg['crit_low']})")
+                        elif _cfg["warn_low"] and _cur < _cfg["warn_low"]:
+                            _warn_list.append(
+                                f"⚠️ **{_cfg['label']}** low: {_cur:.2f} {_cfg['unit']} "
+                                f"(safe min: {_cfg['warn_low']})")
+
+                        if _cfg["crit_high"] and _cur > _cfg["crit_high"]:
+                            _emerg_alerts.append(
+                                f"🔴 **CRITICAL HIGH — {_cfg['label']}**: {_cur:.2f} {_cfg['unit']} "
+                                f"(threshold: {_cfg['crit_high']})")
+                        elif _cfg["warn_high"] and _cur > _cfg["warn_high"]:
+                            _warn_list.append(
+                                f"⚠️ **{_cfg['label']}** elevated: {_cur:.2f} {_cfg['unit']} "
+                                f"(safe max: {_cfg['warn_high']})")
+            except Exception as _ae:
+                st.warning(f"Alert engine error: {_ae}")
+
+        _acol1, _acol2 = st.columns([3, 2], gap="large")
+
+        with _acol1:
+            st.markdown("##### Emergency Alerts")
+            if _sensor_failures:
+                for _sf in _sensor_failures:
+                    st.markdown(
+                        f"""<div class="nccr-alert-critical">
+                        <p class="nccr-alert-title">🛑 SENSOR FAILURE DETECTED</p>
+                        <p class="nccr-alert-body">{_sf}</p></div>""",
+                        unsafe_allow_html=True)
+            if _emerg_alerts:
+                for _ea in _emerg_alerts:
+                    st.markdown(
+                        f"""<div class="nccr-alert-critical">
+                        <p class="nccr-alert-title">{_ea}</p></div>""",
+                        unsafe_allow_html=True)
+            if _warn_list:
+                for _w in _warn_list:
+                    st.markdown(
+                        f"""<div class="nccr-alert-warning">
+                        <p class="nccr-alert-body">{_w}</p></div>""",
+                        unsafe_allow_html=True)
+            if not _sensor_failures and not _emerg_alerts and not _warn_list:
+                st.markdown(
+                    """<div class="nccr-alert-ok">
+                    <p class="nccr-alert-title">🟢 ALL CLEAR — No Threshold Violations</p>
+                    <p class="nccr-alert-body">All monitored parameters are within safe ecological bounds.</p>
+                    </div>""",
+                    unsafe_allow_html=True)
+
+        with _acol2:
+            st.markdown("##### Sensor Health")
+            if _sensor_status:
+                for _sname, _online in _sensor_status.items():
+                    if _online is True:
+                        st.markdown(f"🟢 **{_sname[:30]}** — Online")
+                    elif _online is False:
+                        st.markdown(f"🔴 **{_sname[:30]}** — **OFFLINE** *(consecutive zeros)*")
+                    elif _online == "absent":
+                        st.markdown(f"⚫ **{_sname[:30]}** — Sensor Absent / Not Detected in Data")
+                    else:
+                        st.markdown(f"⚪ **{_sname[:30]}** — No Data")
+            else:
+                st.info("Fetch buoy data to see sensor status.")
+
+        # ══════════════════════════════════════════════════════════════════════
+        # SECTION C — LSTM Advisory (Precautions for Next 3 Days)
+        # ══════════════════════════════════════════════════════════════════════
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+        st.markdown("""<hr style="margin:0 0 16px 0; border-color:rgba(26,58,92,0.09);">""", unsafe_allow_html=True)
+        st.markdown('<p class="nccr-section-label">🧠 LSTM Advisory — Recommended Actions for Next 3 Days</p>',
+                    unsafe_allow_html=True)
+
+        _ADVISORY = {
+            "do": {
+                "crit":  (3.0, "🔴 **Hypoxia Risk** — DO predicted critically low. Activate emergency aeration. "
+                               "Halt aquaculture feeding. Alert field operations team immediately."),
+                "warn":  (5.0, "🟡 **Low Dissolved Oxygen** — Increase water circulation. Limit aquaculture "
+                               "activity. Re-monitor every 2 hours."),
+                "ok":         "🟢 Dissolved Oxygen stable. Normal aquaculture operations permitted.",
+            },
+            "ph": {
+                "hi_crit": (9.0, "🔴 **High pH Emergency** — Algal bloom likely. Restrict feeding zones. "
+                                  "Notify NCCR field team. Consider liming treatment."),
+                "hi_warn": (8.5, "🟡 **Elevated pH** — Possible algal activity. Reduce coastal fertilizer "
+                                  "runoff. Increase monitoring cadence."),
+                "lo_crit": (6.5, "🔴 **Acid Event** — pH critically low. Inspect industrial discharge. "
+                                  "Halt new fish stocking."),
+                "lo_warn": (7.0, "🟡 **Slightly Acidic** — Monitor runoff and storm drains. "
+                                  "Check upstream sources."),
+                "ok":           "🟢 pH balanced. Coastal chemistry within normal range.",
+            },
+            "turb": {
+                "crit":  (50.0, "🔴 **Extreme Turbidity** — Severe sediment event. Issue small vessel advisory. "
+                                 "Suspend underwater operations and dredging."),
+                "warn":  (15.0, "🟡 **Elevated Turbidity** — Restrict diving/snorkeling. Check storm drains "
+                                 "and upstream construction sites."),
+                "ok":          "🟢 Water clarity normal. Field operations unaffected.",
+            },
+            "temp": {
+                "hi_crit": (34.0, "🔴 **Thermal Stress Alert** — Risk of coral bleaching. Restrict heat-sensitive "
+                                    "aquaculture. Notify marine biologists."),
+                "hi_warn": (32.0, "🟡 **Warm Waters** — Elevated algal bloom risk. Reduce nutrient discharge "
+                                    "into coastal zone."),
+                "lo_warn": (22.0, "🟡 **Cool Conditions** — Monitor cold-sensitive species. Adjust aquaculture "
+                                    "feeding schedules."),
+                "ok":            "🟢 Temperature within seasonal norms. No thermal action required.",
+            },
+        }
+
+        if forecast_rows and not forecast_error:
+            # Aggregate predictions by day
+            _day_sums = {}
+            for _row in forecast_rows:
+                _dk = _row["Window"].split("—")[0].strip()
+                if _dk not in _day_sums:
+                    _day_sums[_dk] = {"do": [], "ph": [], "turb": [], "temp": []}
+                try:
+                    if _row.get("DO (mg/L)")        not in (None, "N/A"):
+                        _day_sums[_dk]["do"].append(float(_row["DO (mg/L)"]))
+                    if _row.get("pH")               not in (None, "N/A"):
+                        _day_sums[_dk]["ph"].append(float(_row["pH"]))
+                    if _row.get("Turbidity (NTU)")  not in (None, "N/A"):
+                        _day_sums[_dk]["turb"].append(float(_row["Turbidity (NTU)"]))
+                    if _row.get("Water Temp (°C)")  not in (None, "N/A"):
+                        _day_sums[_dk]["temp"].append(float(_row["Water Temp (°C)"]))
+                except Exception:
+                    pass
+
+            _adv_cols = st.columns(max(len(_day_sums), 1))
+
+            for _ai, (_dk, _s) in enumerate(_day_sums.items()):
+                with _adv_cols[_ai]:
+                    # Card wrapper
+                    _day_advs = []
+
+                    if _s["do"]:
+                        _mn = min(_s["do"]); _avg = sum(_s["do"]) / len(_s["do"])
+                        r = _ADVISORY["do"]
+                        if _mn  < r["crit"][0]:  _day_advs.append(r["crit"][1])
+                        elif _avg < r["warn"][0]: _day_advs.append(r["warn"][1])
+                        else:                     _day_advs.append(r["ok"])
+
+                    if _s["ph"]:
+                        _avg = sum(_s["ph"]) / len(_s["ph"])
+                        r = _ADVISORY["ph"]
+                        if   _avg > r["hi_crit"][0]: _day_advs.append(r["hi_crit"][1])
+                        elif _avg > r["hi_warn"][0]: _day_advs.append(r["hi_warn"][1])
+                        elif _avg < r["lo_crit"][0]: _day_advs.append(r["lo_crit"][1])
+                        elif _avg < r["lo_warn"][0]: _day_advs.append(r["lo_warn"][1])
+                        else:                        _day_advs.append(r["ok"])
+
+                    if _s["turb"]:
+                        _mx = max(_s["turb"])
+                        r = _ADVISORY["turb"]
+                        if   _mx > r["crit"][0]: _day_advs.append(r["crit"][1])
+                        elif _mx > r["warn"][0]: _day_advs.append(r["warn"][1])
+                        else:                    _day_advs.append(r["ok"])
+
+                    if _s["temp"]:
+                        _avg = sum(_s["temp"]) / len(_s["temp"])
+                        r = _ADVISORY["temp"]
+                        if   _avg > r["hi_crit"][0]: _day_advs.append(r["hi_crit"][1])
+                        elif _avg > r["hi_warn"][0]: _day_advs.append(r["hi_warn"][1])
+                        elif _avg < r["lo_warn"][0]: _day_advs.append(r["lo_warn"][1])
+                        else:                        _day_advs.append(r["ok"])
+
+                    if not _day_advs:
+                        _day_advs = ["ℹ️ Forecast data insufficient for this day's advisory."]
+
+                    # Determine overall card severity
+                    _has_red    = any("🔴" in a for a in _day_advs)
+                    _has_yellow = any("🟡" in a for a in _day_advs)
+                    _card_color = ("#FFF0F0" if _has_red
+                                   else "#FFFBEC" if _has_yellow
+                                   else "#F0FFF5")
+                    _border_col = ("#DC2626" if _has_red
+                                   else "#F59E0B" if _has_yellow
+                                   else "#16A34A")
+
+                    st.markdown(
+                        f"""<div style="background:{_card_color}; border:1.5px solid {_border_col};
+                            border-radius:12px; padding:14px 16px; margin-bottom:6px;">
+                        <p style="font-weight:700; color:#1A3A5C; font-size:0.88rem;
+                                  text-transform:uppercase; letter-spacing:.06em; margin:0 0 10px 0;">
+                            {_dk}</p>""",
+                        unsafe_allow_html=True)
+                    for _adv in _day_advs:
+                        st.markdown(_adv)
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+        elif forecast_error:
+            st.info(f"ℹ️ Advisory unavailable — LSTM forecast not running: {forecast_error}")
+        else:
+            st.info("ℹ️ Start the LSTM forecast above to generate advisory messages.")
+
     # -----------------------------------------------------
     # OPTION: GLOBAL MAP VIEW (NEW)
     # -----------------------------------------------------

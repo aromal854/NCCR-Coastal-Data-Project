@@ -114,10 +114,6 @@ def app():
     )
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
-    # Initialize State Variables
-    certificate_ready = False
-    pdf_bytes = None
-    
     # Global User Name Input
     user_name = st.text_input("Your Name", value=st.session_state.get('user_name', 'Guest'))
     contributor_name = user_name
@@ -281,8 +277,13 @@ def app():
                             
                         # Send Email
                         if send_verification_email(prof_email, prof_name, request_id, user_name):
-                            st.success(f"✅ Invitation sent to {prof_email}!")
-                            st.info("Your data is pending verification. Once approved, it will be added to the database.")
+                            st.success(f"✅ Verification request sent to Prof. {prof_name} ({prof_email})!")
+                            st.info(
+                                "⏳ Your data is **pending professor verification**. "
+                                "Once Prof. " + prof_name + " approves your submission, "
+                                "your **Certificate of Contribution** will be automatically "
+                                "emailed to you."
+                            )
                         else:
                             st.warning("Data saved, but failed to send email. Please contact Admin.")
                             
@@ -447,7 +448,13 @@ def app():
                             
                             # Send Email
                             if send_verification_email(b_prof_email, b_prof_name, request_id, user_name):
-                                st.success(f"✅ Bulk Data submitted! Verification link sent to Prof. {b_prof_name} ({b_prof_email}).")
+                                st.success(f"✅ Bulk Data submitted! Verification request sent to Prof. {b_prof_name} ({b_prof_email}).")
+                                st.info(
+                                    "⏳ Your data is **pending professor verification**. "
+                                    "Once Prof. " + b_prof_name + " approves your submission, "
+                                    "your **Certificate of Contribution** will be automatically "
+                                    "emailed to you."
+                                )
                                 st.balloons()
                             else:
                                 st.warning("Data saved, but failed to send email. Please contact Admin.")
