@@ -3,6 +3,7 @@ from supabase import create_client
 import pandas as pd
 import bcrypt
 import base64
+import time
 from datetime import datetime
 
 # --- SUPABASE CONNECTION ---
@@ -17,6 +18,19 @@ def init_connection():
         return None
 
 supabase = init_connection()
+
+# --- RETRY HELPER (handles WinError 10035 transient socket errors) ---
+def _retry(fn, retries=3, delay=2):
+    """Calls fn() up to `retries` times, sleeping `delay` seconds between attempts."""
+    last_err = None
+    for attempt in range(retries):
+        try:
+            return fn()
+        except Exception as e:
+            last_err = e
+            if attempt < retries - 1:
+                time.sleep(delay)
+    raise last_err
 
 # --- HELPER: MAP KEYS TO DB (LOWERCASE) ---
 def map_keys_to_db(data_dict):
@@ -122,7 +136,7 @@ def register_user(email, name, password, role="User"):
         
         hashed = hash_password(password)
         user_data = {"email": email, "name": name, "password": hashed, "role": role}
-        supabase.table("users").insert(user_data).execute()
+        _retry(lambda: supabase.table("users").insert(user_data).execute())
         return True, "Registration successful!"
     except Exception as e:
         return False, f"Error: {str(e)}"
@@ -150,7 +164,7 @@ def save_marine_data(data_dict):
         if supabase:
             # MAP KEYS TO LOWERCASE BEFORE SAVING
             clean_data = map_keys_to_db(data_dict)
-            supabase.table("marine_data").insert(clean_data).execute()
+            _retry(lambda: supabase.table("marine_data").insert(clean_data).execute())
             return True
         return False
     except Exception as e:
@@ -167,7 +181,8 @@ def save_bulk_data(data_list):
             batch_size = 1000
             for i in range(0, len(clean_list), batch_size):
                 batch = clean_list[i : i + batch_size]
-                supabase.table("marine_data").insert(batch).execute()
+                b = batch
+                _retry(lambda: supabase.table("marine_data").insert(b).execute())
             
             return True, "Success"
         return False, "No Connection"
@@ -252,7 +267,7 @@ def submit_access_request(email, purpose):
         if existing.data: return False, "Pending request already exists."
             
         data = {"user_email": email, "purpose": purpose, "status": "Pending", "request_date": str(datetime.now())}
-        supabase.table("access_requests").insert(data).execute()
+        _retry(lambda: supabase.table("access_requests").insert(data).execute())
         return True, "Request submitted."
     except Exception as e:
         return False, str(e)
@@ -278,7 +293,7 @@ def fetch_pending_requests():
 def update_request_status(request_id, new_status):
     try:
         if supabase:
-            supabase.table("access_requests").update({"status": new_status}).eq("id", request_id).execute()
+            _retry(lambda: supabase.table("access_requests").update({"status": new_status}).eq("id", request_id).execute())
             return True
         return False
     except:
@@ -288,7 +303,7 @@ def delete_data(record_ids):
     """Deletes records from marine_data based on ID list."""
     try:
         if supabase:
-            supabase.table("marine_data").delete().in_("id", record_ids).execute()
+            _retry(lambda: supabase.table("marine_data").delete().in_("id", record_ids).execute())
             return True
         return False
     except Exception as e:
@@ -313,7 +328,7 @@ def save_paper(title, summary, author, role, file_obj):
             "file_name": file_name, "file_data": base64_file, "created_at": str(datetime.now())
         }
         if supabase:
-            supabase.table("research_papers").insert(data).execute()
+            _retry(lambda: supabase.table("research_papers").insert(data).execute())
             return True, "Published!"
         return False, "Database Error"
     except Exception as e:
