@@ -115,7 +115,7 @@ def create_certificate(
     record_word = "data record" if num_records == 1 else "data records"
     body_lines = [
         f"has made a verified contribution of {num_records} coastal {record_word} to the",
-        f"NCCR Marine Data Portal for the coastal region of",
+        f"NCCR Coastal-Marine Data Portal for the coastal region of",
         f"{location}.",
         "",
         "The submitted data has been independently reviewed and verified by the",
@@ -168,7 +168,7 @@ def create_certificate(
 
     # ── BOTTOM BANNER ─────────────────────────────────────────────────────
     draw.text((W // 2, H - 70),
-              "NCCR Marine Data Portal  ·  An Initiative of Ministry of Earth Sciences, Government of India",
+              "NCCR Coastal-Marine Data Portal  ·  An Initiative of Ministry of Earth Sciences, Government of India",
               fill=white, font=f_small, anchor="mt")
     draw.text((W // 2, H - 50),
               "nccr.res.in  ·  This certificate is computer-generated and valid without physical signature.",

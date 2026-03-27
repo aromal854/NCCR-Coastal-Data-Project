@@ -40,9 +40,13 @@ def send_email_notification(to_email, subject, message_body):
 def send_verification_email(prof_email, prof_name, data_id):
     """Sends a verification email to the professor."""
     try:
-        # Construct Magic Link (assuming running locally on default port)
-        # In production, this would be the actual domain
-        link = f"http://localhost:8501/?page=verify&id={data_id}"
+        # Use deployed URL from secrets if available, else fallback to localhost for local dev
+        try:
+            import streamlit as st
+            base_url = st.secrets.get("APP_URL", "http://localhost:8501")
+        except Exception:
+            base_url = "http://localhost:8501"
+        link = f"{base_url}/?page=verify&id={data_id}"
         
         subject = f"Action Required: Verify Marine Data Contribution"
         
@@ -57,7 +61,7 @@ def send_verification_email(prof_email, prof_name, data_id):
         If you did not request this, please ignore this email.
         
         Regards,
-        NCCR Marine Data Portal
+        NCCR Coastal-Marine Data Portal
         """
 
         msg = MIMEMultipart()

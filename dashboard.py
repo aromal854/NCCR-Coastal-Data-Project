@@ -45,7 +45,7 @@ def main_app():
                     <span class="material-symbols-rounded nccr-icon">waves</span>
                     <div>
                         <div class="nccr-section-label">NCCR Coastal Monitoring Platform</div>
-                        <h2 style="margin:0;">NCCR Marine Data Portal</h2>
+                        <h2 style="margin:0;">NCCR Coastal-Marine Data Portal</h2>
                         <p class="nccr-card-subtitle" style="margin-top:6px;">
                             Explore, contribute, and analyze coastal water quality signals with a modern dashboard.
                         </p>
@@ -412,7 +412,7 @@ def main_app():
                                     r_data = {
                                         "Window": f"Day {day_num} — {slot_dt.strftime('%d %b %H:%M')}",
                                         "Water Temp (°C)": "N/A", "pH": "N/A", "DO (mg/L)": "N/A",
-                                        "Salinity (psu)": "N/A", "Turbidity (NTU)": "N/A"
+                                        "Salinity (psu)": "N/A"
                                     }
                                     for idx, fn in enumerate(FEATURES):
                                         if fn in avail_feats: # Use avail_feats logic to only display columns that exist in live data
@@ -421,7 +421,6 @@ def main_app():
                                             elif fn == 'ph': r_data["pH"] = val
                                             elif fn == 'do': r_data["DO (mg/L)"] = val
                                             elif fn == 'salinity': r_data["Salinity (psu)"] = val
-                                            elif fn == 'turbidity': r_data["Turbidity (NTU)"] = val
                                     forecast_rows.append(r_data)
         except Exception as e:
             forecast_error = f"Inference Engine Offline: {e}"
@@ -438,7 +437,6 @@ def main_app():
                     <td>{r['pH']}</td>
                     <td>{r['DO (mg/L)']}</td>
                     <td>{r['Salinity (psu)']}</td>
-                    <td>{r['Turbidity (NTU)']}</td>
                 </tr>'''
                 for r in forecast_rows
             )
@@ -451,7 +449,6 @@ def main_app():
                     <th>pH</th>
                     <th>DO (mg/L)</th>
                     <th>Salinity (psu)</th>
-                    <th>Turbidity (NTU)</th>
                 </tr>
             </thead>
             <tbody>{rows_html}</tbody>

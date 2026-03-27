@@ -89,7 +89,7 @@ def login_page():
                         <div style="display:flex; gap:12px; align-items:flex-start;">
                             <span class="material-symbols-rounded nccr-icon">waves</span>
                             <div>
-                                <h2 style="margin:0;">NCCR Marine Data Portal</h2>
+                                <h2 style="margin:0;">NCCR Coastal-Marine Data Portal</h2>
                                 <p class="nccr-card-subtitle" style="margin-top:6px;">
                                     Sign in to explore coastal datasets, contribute field observations, and run predictions.
                                 </p>

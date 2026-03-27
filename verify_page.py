@@ -42,7 +42,7 @@ def _send_certificate_email(
           <p>Please find your <b>NCCR Certificate of Contribution</b> attached to this email.</p>
           <p>Thank you for contributing to India's coastal data ecosystem.</p>
           <p>With regards,<br>
-          <b>NCCR Marine Data Portal</b><br>
+          <b>NCCR Coastal-Marine Data Portal</b><br>
           National Centre for Coastal Research, Ministry of Earth Sciences</p>
         </body></html>
         """

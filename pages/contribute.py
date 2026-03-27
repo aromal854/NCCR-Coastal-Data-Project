@@ -16,7 +16,7 @@ PENDING_CSV = "pending_verification.csv"
 def send_verification_email(to_email, prof_name, request_id, user_name):
     # 1. Setup the Email Wrapper
     msg = MIMEMultipart('related')
-    msg['Subject'] = "[Action Required] Verify Data Submission - NCCR Marine Data Portal"
+    msg['Subject'] = "[Action Required] Verify Data Submission - NCCR Coastal-Marine Data Portal"
     msg['From'] = config.SENDER_EMAIL
     msg['To'] = to_email
 
@@ -43,8 +43,8 @@ def send_verification_email(to_email, prof_name, request_id, user_name):
         <p>Dear Prof. {prof_name},</p>
         <p>Good Day!</p>
         <p>It is for your information that <b>National Centre for Coastal Research</b>, an attached body of Ministry of Earth Sciences, Govt. of India has taken an initiative for strengthening coastal-ocean data repository for the welfare of Indian coastal Community and various government initiative and missions.</p>
-        <p>As a part of this initiative data can be requested and shared by a Researcher/academician to the NCCR-Marine Data Portal for their advance research and understanding the coastal environment in face of changing nature-human landscape.</p>
-        <p>Therefore, On behalf of above NCCR-Marine Data Portal, I may request to verify my attached data and kindly approve so that it will be placed at the above data portal. This data shall be treated as contributed and verified by <b>Shri. {user_name}</b> and <b>Prof./Dr. {prof_name}</b> jointly.</p>
+        <p>As a part of this initiative data can be requested and shared by a Researcher/academician to the NCCR Coastal-Marine Data Portal for their advance research and understanding the coastal environment in face of changing nature-human landscape.</p>
+        <p>Therefore, On behalf of above NCCR Coastal-Marine Data Portal, I may request to verify my attached data and kindly approve so that it will be placed at the above data portal. This data shall be treated as contributed and verified by <b>Shri. {user_name}</b> and <b>Prof./Dr. {prof_name}</b> jointly.</p>
         <p>As per the requirement of Data portal, Data has to be verified by the expert within 15 days from date of submission of the data.</p>
         <p>You may please suggest any other expert(s), in case you preoccupied/unavailable to verify the data.</p>
         
